@@ -469,7 +469,7 @@ const QUESTIONS = {
     {id:"5_2",level:"SL+HL",marks:4,type:"short",
      question:"A business has the following data:\n• Fixed Costs: $60,000\n• Selling Price per unit: $25\n• Variable Cost per unit: $15\n• Current Output: 8,000 units\n\n(i) Calculate the break-even quantity. [2 marks]\n(ii) Calculate the margin of safety. [1 mark]\n(iii) Calculate the profit or loss at current output. [1 mark]",
      modelAnswer:"(i) Contribution per unit = $25 − $15 = $10\nBEQ = Fixed Costs ÷ Contribution per unit = $60,000 ÷ $10 = 6,000 units\n\n(ii) Margin of Safety = Actual Output − BEQ = 8,000 − 6,000 = 2,000 units\n\n(iii) Total Contribution = 8,000 × $10 = $80,000\nProfit = Total Contribution − Fixed Costs = $80,000 − $60,000 = $20,000",
-     keywords:["contribution","10","6,000","6000","2,000","2000","20,000","20000"],
+     keywords:["contribution","10","6,000 units","2,000 units","20,000"],
      markingGuidance:"(i) [1] for contribution per unit ($10), [1] for BEQ = 6,000. (ii) [1] for MoS = 2,000 units. (iii) [1] for profit = $20,000. OFR applies throughout."},
     {id:"5_3",level:"SL+HL",marks:4,type:"short",
      question:"Explain two limitations of break-even analysis as a decision-making tool. [4 marks]",
@@ -771,12 +771,141 @@ function getProgress(unitId) {
 
 // ─── SCORING ──────────────────────────────────────────────────────────────────
 
+// Numbers only, unit stripped off. Handles $ signs, thousands commas, percent
+// signs and the unicode minus sign some model answers use, so "300,000",
+// "300000" and "−3" all normalize the same way.
+function normalizeNum(str) {
+  return String(str).replace(/−/g, '-').replace(/\$/g, '').replace(/,/g, '').replace(/%/g, '').trim();
+}
+
+// A numeric keyword can carry a required unit, using a simple convention in
+// the data itself: "$11,000" (a leading $) requires a dollar figure,
+// "60%" / "60 %" (a trailing %) requires a percent sign, and "6,000 units"
+// (a trailing word) requires that word. A bare "20,000" has no unit
+// requirement. Returns null if the keyword isn't numeric at all.
+function parseNumericKeyword(kw) {
+  const raw = String(kw).trim();
+  let m = raw.match(/^\$\s*(-?[\d,]+(?:\.\d+)?)$/);
+  if (m) return { value: Number(normalizeNum(m[1])), unit: '$' };
+  m = raw.match(/^(-?[\d,]+(?:\.\d+)?)\s*%$/);
+  if (m) return { value: Number(normalizeNum(m[1])), unit: '%' };
+  m = raw.match(/^(-?[\d,]+(?:\.\d+)?)\s+([a-zA-Z]+)$/);
+  if (m) return { value: Number(normalizeNum(m[1])), unit: m[2].toLowerCase() };
+  const n = normalizeNum(raw);
+  if (n !== '' && /^-?\d+(\.\d+)?$/.test(n)) return { value: Number(n), unit: null };
+  return null;
+}
+
+// Pulls every number out of the student's answer, tagging each with whatever
+// unit immediately surrounds it ($ before, % or a word straight after), so
+// "6,000 units" and "$6,000" are told apart, not just matched as "6000".
+function extractUserNumberTokens(text) {
+  const cleaned = String(text).replace(/−/g, '-');
+  const tokens = [];
+  const re = /(\$\s*)?(-?[\d,]+(?:\.\d+)?)(\s*%)?/g;
+  let m;
+  while ((m = re.exec(cleaned)) !== null) {
+    const numStr = m[2];
+    if (!numStr || !/\d/.test(numStr)) continue;
+    const value = Number(numStr.replace(/,/g, ''));
+    if (isNaN(value)) continue;
+    let trailingWord = null;
+    if (!m[3]) {
+      const after = cleaned.slice(re.lastIndex, re.lastIndex + 15);
+      const wm = after.match(/^\s*([a-zA-Z]+)/);
+      if (wm) trailingWord = wm[1].toLowerCase();
+    }
+    tokens.push({ value, hasDollarPrefix: !!m[1], hasPercentSuffix: !!m[3], trailingWord });
+  }
+  return tokens;
+}
+
+// Scores a single required figure against the student's numbers:
+//   1   = right number, right (or no) unit required
+//   0.5 = right number, but no unit given at all (ambiguous/omitted)
+//   0   = number missing entirely, OR present with the WRONG unit attached
+//         (e.g. a dollar sign on what should be a unit count) — a real
+//         conceptual mix-up, not just a formatting slip, so it earns nothing.
+// A clean x1000 relationship also counts (a student who shows working in
+// thousands, consistent with the question's figures, isn't penalised), and
+// matching is on magnitude only — a deficit written as -35000 or as (35,000)
+// is the same figure; sign/F-A labelling, where it matters, is its own
+// separate textual keyword.
+function targetScore(tokens, target) {
+  const absTarget = Math.abs(target.value);
+  const matches = tokens.filter(t => {
+    const absN = Math.abs(t.value);
+    return Math.abs(absN - absTarget) < 0.01 ||
+      (absTarget >= 100 && Math.abs(absN - absTarget / 1000) < 0.01) ||
+      (absN >= 100000 && Math.abs(absTarget - absN / 1000) < 0.01);
+  });
+  if (!matches.length) return 0;
+  if (!target.unit) return 1;
+  let sawCorrectUnit = false, sawWrongUnit = false;
+  matches.forEach(t => {
+    const hasThisUnit = target.unit === '%' ? t.hasPercentSuffix
+      : target.unit === '$' ? t.hasDollarPrefix
+      : (!!t.trailingWord && t.trailingWord.replace(/s$/, '') === target.unit.replace(/s$/, ''));
+    if (hasThisUnit) { sawCorrectUnit = true; return; }
+    if (t.hasDollarPrefix || t.hasPercentSuffix || t.trailingWord) sawWrongUnit = true;
+  });
+  if (sawCorrectUnit) return 1;
+  if (sawWrongUnit) return 0;
+  return 0.5;
+}
+
 function scoreAnswer(text, q) {
   if (q.type === 'essay') return null;
   const lower = text.toLowerCase();
-  const hits = (q.keywords || []).filter(kw => lower.includes(kw.toLowerCase()));
-  const ratio = hits.length / Math.max(q.keywords.length, 1);
   const max = q.marks;
+  const allKw = q.keywords || [];
+  const numericKw = allKw.filter(kw => !!parseNumericKeyword(kw));
+  const textualKw = allKw.filter(kw => !parseNumericKeyword(kw));
+
+  if (numericKw.length) {
+    // Calculation question. Match the required figure(s) as numbers, not as
+    // literal substrings, so formatting (commas, thousands shorthand, sign
+    // vs brackets) never costs marks for a mathematically correct answer —
+    // but the unit is checked deliberately, since a right number with the
+    // wrong or missing unit (60 instead of 60%, $6,000 instead of 6,000
+    // units for a break-even quantity) is a real mark lost, not a formatting
+    // nitpick.
+    const tokens = extractUserNumberTokens(text);
+    const targets = [];
+    numericKw.forEach(kw => {
+      const p = parseNumericKeyword(kw);
+      if (p && !targets.some(t => t.unit === p.unit && Math.abs(t.value - p.value) < 0.01)) targets.push(p);
+    });
+    const scores = targets.map(t => targetScore(tokens, t));
+    const numSum = scores.reduce((a, b) => a + b, 0);
+    const numFraction = targets.length ? numSum / targets.length : 0;
+    const numFull = targets.length > 0 && scores.every(s => s === 1);
+
+    // Short, single-figure calculation questions (up to 2 marks): nobody
+    // realistically types out formula vocabulary for a 2-mark arithmetic
+    // item, so the score rests on the number(s) and their units alone.
+    // floor (not round) so a missing unit never quietly rounds back up to
+    // full marks.
+    if (max <= 2) {
+      if (!targets.length) return 0;
+      return Math.floor(max * numFraction + 1e-9);
+    }
+
+    // Longer / multi-part calculation questions: numeric accuracy (incl.
+    // units) still carries most of the weight, but written explanation
+    // genuinely matters for the marks that require it.
+    const textHits = textualKw.filter(kw => lower.includes(kw.toLowerCase())).length;
+    const textFraction = textualKw.length ? textHits / textualKw.length : null;
+    if (numFull && (textFraction === null || textFraction >= 0.34)) return max;
+
+    const blended = textFraction === null ? numFraction : (0.7 * numFraction + 0.3 * textFraction);
+    let score = Math.floor(max * blended + 1e-9);
+    if (score === 0 && text.trim().length > 30) score = Math.min(1, max);
+    return Math.max(0, Math.min(max, score));
+  }
+
+  const hits = allKw.filter(kw => lower.includes(kw.toLowerCase()));
+  const ratio = hits.length / Math.max(allKw.length, 1);
   if (ratio >= 0.7) return max;
   if (ratio >= 0.45) return Math.max(1, Math.ceil(max * 0.6));
   if (ratio >= 0.2) return Math.max(1, Math.ceil(max * 0.35));
@@ -791,10 +920,10 @@ function scoreColor(score, max) {
 }
 
 function scoreLabel(score, max) {
-  if (score >= max) return 'Full marks — excellent!';
-  if (score >= max * 0.7) return 'Good attempt — check model answer for fine-tuning';
-  if (score >= max * 0.4) return 'Partial credit — review key terms missed';
-  return 'Below threshold — study model answer carefully';
+  if (score >= max) return 'Full marks, excellent!';
+  if (score >= max * 0.7) return 'Good attempt, check model answer for fine tuning';
+  if (score >= max * 0.4) return 'Partial credit, review key terms missed';
+  return 'Below threshold, study model answer carefully';
 }
 
 // ─── RENDER ───────────────────────────────────────────────────────────────────
@@ -955,11 +1084,11 @@ function renderQuestions(unit) {
   const essay = qs.filter(q => q.type === 'essay');
 
   return `
-    <div class="intro-text">Questions are auto-scored based on key concept coverage (indicative only). Model answers and marking guidance appear after submission. Essays are flagged for your teacher.</div>
+    <div class="intro-text">Questions are scored automatically based on key concept coverage (indicative only). Model answers and marking guidance appear after submission. For the 10 mark essay, use the box to plan your response, then write out the full essay by hand and give it to your teacher for marking. Nothing here is sent to your teacher automatically.</div>
     <div class="section-label sl">SL + HL Questions</div>
     ${slHl.map(q => renderQuestion(q, unit.accent)).join('')}
     ${hlOnly.length ? `<div class="section-label hl">HL Extension Questions</div>${hlOnly.map(q => renderQuestion(q, unit.accent)).join('')}` : ''}
-    <div class="section-label essay">Extended Response — Teacher Marked</div>
+    <div class="section-label essay">Extended Response, Marked by Your Teacher</div>
     ${essay.map(q => renderQuestion(q, unit.accent)).join('')}`;
 }
 
@@ -975,17 +1104,18 @@ function renderQuestion(q, accent) {
       <div class="q-badges">
         <span class="badge" style="background:${levelBg};color:${levelColor}">${levelText}</span>
         ${isEssay
-          ? '<span class="badge badge-essay">10 marks — Teacher Marked</span>'
+          ? '<span class="badge badge-essay">10 marks, marked by your teacher</span>'
           : `<span class="badge badge-marks">${q.marks} marks</span>`}
       </div>
       <div class="q-text">${escHtml(q.question)}</div>
       <textarea class="q-textarea" id="ta-${q.id}" rows="${isEssay ? 12 : 5}"
         style="border-color:${accent}44"
-        placeholder="${isEssay ? 'Plan your essay here — use paragraphs, name theories, apply to context...' : 'Write your answer here...'}"
+        placeholder="${isEssay ? 'Plan your essay here. Note your paragraphs, the theories you will use, and how you will apply them to the context.' : 'Write your answer here...'}"
       ></textarea>
       <button class="submit-btn" data-qid="${q.id}" style="background:${accent}" id="sb-${q.id}">
-        ${isEssay ? 'Submit for Teacher Review' : 'Submit Answer'}
+        ${isEssay ? 'Show Essay Guidance' : 'Submit Answer'}
       </button>
+      ${isEssay ? `<div class="source-tag">This does not send anything to your teacher. Write your full essay by hand and hand it in for marking.</div>` : ''}
     </div>`;
   }
 
@@ -999,7 +1129,7 @@ function renderQuestion(q, accent) {
       <div class="score-num" style="color:${sColor}">${sc}/${q.marks}</div>
       <div>
         <div class="score-label" style="color:${sColor}">${scoreLabel(sc, q.marks)}</div>
-        <div class="score-sub">Auto-scored on key concept coverage</div>
+        <div class="score-sub">Scored automatically on key concept coverage</div>
       </div>
     </div>`;
   }
@@ -1007,6 +1137,7 @@ function renderQuestion(q, accent) {
     scoreHTML = `<div class="essay-guidance">
       <div class="essay-guidance-title">📋 Essay Guidance (for teacher marking)</div>
       <div class="essay-guidance-text">${escHtml(q.essayGuidance)}</div>
+      <div class="essay-guidance-text" style="margin-top:10px;font-weight:700">Remember, write your full essay by hand and hand it to your teacher. Nothing on this page is submitted for you.</div>
     </div>`;
   }
 
@@ -1028,12 +1159,12 @@ function renderQuestion(q, accent) {
     <div class="q-badges">
       <span class="badge" style="background:${levelBg};color:${levelColor}">${levelText}</span>
       ${isEssay
-        ? '<span class="badge badge-essay">10 marks — Teacher Marked</span>'
+        ? '<span class="badge badge-essay">10 marks, marked by your teacher</span>'
         : `<span class="badge badge-marks">${q.marks} marks</span>`}
     </div>
     <div class="q-text">${escHtml(q.question)}</div>
     <div class="user-answer-box" style="border-color:${accent}33">
-      <div class="ua-label">Your Answer</div>
+      <div class="ua-label">${isEssay ? 'Your Plan' : 'Your Answer'}</div>
       <div class="ua-text">${escHtml(a.text)}</div>
     </div>
     ${scoreHTML}
