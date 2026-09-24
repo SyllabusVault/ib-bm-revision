@@ -1,0 +1,1309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IB Business Management 2024 — Revision Tool</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0d0d10; color: #e0e0e0; font-family: Georgia, 'Times New Roman', serif; min-height: 100vh; }
+  button { font-family: inherit; }
+  textarea { font-family: Georgia, serif; }
+
+  /* HEADER */
+  #app-header {
+    background: linear-gradient(180deg, #111118 0%, #0d0d10 100%);
+    border-bottom: 1px solid #ffffff12;
+    padding: 22px 32px;
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+  }
+  #back-btn {
+    background: none; border: none; cursor: pointer;
+    font-size: 13px; font-weight: 700; margin-bottom: 5px;
+    display: flex; align-items: center; gap: 4px; padding: 0;
+  }
+  #header-title { margin: 0; font-weight: 700; letter-spacing: -0.02em; }
+  #header-sub { margin: 4px 0 0; color: #888; font-size: 13px; }
+  .level-badge {
+    padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700;
+  }
+
+  /* MAIN */
+  #main { max-width: 900px; margin: 0 auto; padding: 28px 20px; }
+
+  /* UNIT GRID */
+  #unit-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+  .unit-card {
+    border-radius: 16px; padding: 28px 24px; text-align: left;
+    cursor: pointer; transition: all 0.25s ease; position: relative; overflow: hidden;
+    border: 1px solid transparent;
+  }
+  .unit-card:hover { transform: translateY(-4px); }
+  .unit-progress-bar-bg { width: 100%; height: 3px; background: #ffffff15; border-radius: 2px; margin-bottom: 16px; }
+  .unit-progress-bar { height: 100%; border-radius: 2px; transition: width 0.5s ease; }
+  .unit-pct { position: absolute; top: 12px; right: 16px; font-size: 11px; font-family: monospace; font-weight: 700; }
+  .unit-label { font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 4px; }
+  .unit-subtitle { color: #fff; font-size: 16px; font-weight: 600; line-height: 1.3; }
+
+  /* LEGEND */
+  #legend { margin-top: 32px; background: #ffffff06; border: 1px solid #ffffff10; border-radius: 14px; padding: 20px 24px; }
+  #legend h3 { font-size: 13px; font-weight: 700; color: #ccc; margin-bottom: 14px; }
+  #legend-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; }
+  .legend-item { display: flex; gap: 10px; align-items: flex-start; }
+  .legend-icon { font-size: 20px; }
+  .legend-label { font-weight: 600; font-size: 13px; color: #ddd; }
+  .legend-desc { font-size: 12px; color: #888; line-height: 1.4; }
+
+  /* TABS */
+  #tab-bar { display: flex; gap: 4px; margin-bottom: 24px; background: #ffffff08; border-radius: 10px; padding: 4px; width: fit-content; }
+  .tab-btn {
+    padding: 9px 18px; border-radius: 8px; border: none; cursor: pointer;
+    font-size: 13px; font-weight: 600; transition: all 0.2s; color: #888; background: transparent;
+  }
+  .tab-btn.active { color: #000; }
+
+  /* SECTION LABEL */
+  .section-label { margin: 0 0 8px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; }
+  .section-label.hl { color: #ff6b6b; margin-top: 24px; }
+  .section-label.essay { color: #ff9f1c; margin-top: 24px; }
+  .section-label.sl { color: #52b788; }
+
+  /* MISTAKE CARD */
+  .mistake-card { border-radius: 12px; overflow: hidden; margin-bottom: 10px; border: 1px solid transparent; }
+  .mistake-header {
+    width: 100%; padding: 14px 18px; border: none; cursor: pointer;
+    text-align: left; display: flex; justify-content: space-between; align-items: center;
+    transition: background 0.2s;
+  }
+  .mistake-title { font-weight: 600; font-size: 14px; transition: color 0.2s; }
+  .mistake-arrow { font-size: 18px; transition: transform 0.2s; display: inline-block; }
+  .mistake-body { padding: 0 18px 16px; background: #ffffff06; }
+  .mistake-error {
+    background: #ff444415; border: 1px solid #ff444433; border-radius: 8px;
+    padding: 10px 14px; margin-bottom: 10px;
+  }
+  .mistake-fix { background: #00ff8815; border: 1px solid #00ff8833; border-radius: 8px; padding: 10px 14px; }
+  .mistake-tag { font-size: 11px; font-weight: 700; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .mistake-text { font-size: 13px; line-height: 1.5; }
+
+  /* QUESTION CARD */
+  .q-card { background: #ffffff08; border-radius: 14px; padding: 20px; margin-bottom: 16px; border: 1px solid transparent; }
+  .q-badges { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
+  .badge { padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; }
+  .badge-marks { background: #ffffff11; color: #ccc; }
+  .badge-essay { background: #ff9f1c22; color: #ff9f1c; }
+  .q-text { color: #e8e8e8; font-size: 14px; line-height: 1.65; margin-bottom: 14px; white-space: pre-wrap; }
+  .q-textarea {
+    width: 100%; background: #0a0a0a; border-radius: 10px;
+    color: #e8e8e8; font-size: 13px; padding: 12px 14px; resize: vertical; line-height: 1.6;
+    outline: none; border: 1px solid transparent;
+  }
+  .q-textarea:focus { outline: none; }
+  .submit-btn {
+    margin-top: 10px; color: #000; padding: 9px 20px;
+    border-radius: 8px; border: none; cursor: pointer; font-weight: 700; font-size: 13px;
+    transition: opacity 0.2s;
+  }
+  .score-box {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 12px;
+    padding: 10px 14px; border-radius: 10px; border: 1px solid transparent;
+  }
+  .score-num { font-size: 28px; font-weight: 800; font-family: monospace; }
+  .score-label { font-weight: 700; font-size: 13px; }
+  .score-sub { color: #aaa; font-size: 11px; margin-top: 2px; }
+  .user-answer-box {
+    background: #0a0a0a; border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; border: 1px solid transparent;
+  }
+  .ua-label { font-size: 11px; color: #aaa; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .ua-text { color: #ccc; font-size: 13px; line-height: 1.6; white-space: pre-wrap; }
+  .essay-guidance {
+    background: #ff9f1c11; border: 1px solid #ff9f1c33; border-radius: 10px;
+    padding: 12px 14px; margin-bottom: 12px;
+  }
+  .essay-guidance-title { color: #ff9f1c; font-weight: 700; font-size: 13px; margin-bottom: 8px; }
+  .essay-guidance-text { color: #ddd; font-size: 12px; line-height: 1.7; white-space: pre-wrap; }
+  .model-answer-box {
+    margin-top: 12px; background: #00cc6615; border: 1px solid #00cc6633;
+    border-radius: 10px; padding: 14px 16px;
+  }
+  .ma-label { color: #88ffaa; font-weight: 700; font-size: 12px; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .ma-text { color: #ccffdd; font-size: 13px; line-height: 1.7; white-space: pre-wrap; }
+  .mg-divider { margin-top: 10px; padding-top: 10px; border-top: 1px solid #00cc6622; }
+  .mg-label { color: #aaa; font-weight: 700; font-size: 11px; margin-bottom: 4px; text-transform: uppercase; }
+  .mg-text { color: #aacfaa; font-size: 12px; line-height: 1.6; }
+  .action-btn {
+    background: transparent; padding: 7px 16px; border-radius: 8px;
+    cursor: pointer; font-size: 12px; font-weight: 600; margin-right: 8px; transition: opacity 0.2s;
+  }
+  .reset-btn { background: transparent; border: 1px solid #555; color: #aaa; padding: 7px 16px; border-radius: 8px; cursor: pointer; font-size: 12px; }
+
+  /* INTRO TEXT */
+  .intro-text { color: #aaa; font-size: 13px; margin-bottom: 16px; line-height: 1.6; }
+
+  /* PAST PAPER SOURCE TAG */
+  .source-tag { font-size: 11px; color: #888; font-family: monospace; margin-top: 10px; }
+  .reveal-btn {
+    margin-top: 10px; background: transparent; padding: 9px 20px;
+    border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 13px;
+  }
+
+  /* DEVTOOLS OVERLAY (deterrent only — not real protection, see note in chat) */
+  #dt-overlay {
+    display: none; position: fixed; inset: 0; z-index: 99999;
+    background: #0d0d10; align-items: center; justify-content: center; flex-direction: column; gap: 16px;
+  }
+  #dt-overlay.active { display: flex; }
+  #dt-overlay h2 { color: #ff6b6b; font-size: 22px; }
+  #dt-overlay p { color: #aaa; font-size: 14px; text-align: center; max-width: 360px; line-height: 1.6; }
+
+  /* SELECTION / COPY DETERRENT on chrome (not on inputs, so typing still works) */
+  .no-select { user-select: none; -webkit-user-select: none; }
+
+  /* FOOTER */
+  #footer { border-top: 1px solid #ffffff10; text-align: center; padding: 16px; color: #555; font-size: 11px; margin-top: 40px; }
+</style>
+</head>
+<body>
+
+<div id="dt-overlay">
+  <h2>⚠ Developer Tools Detected</h2>
+  <p>This revision tool is protected. Please close Developer Tools to continue using the application.</p>
+</div>
+
+<div id="app-header" class="no-select">
+  <div>
+    <button id="back-btn" style="display:none">← All Units</button>
+    <h1 id="header-title" style="font-size:26px;color:#fff">IB Business Management</h1>
+    <p id="header-sub">2024 Syllabus · Interactive Revision · SL &amp; HL</p>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap" id="header-badges">
+    <span class="level-badge" style="background:#52b78822;color:#52b788">SL</span>
+    <span class="level-badge" style="background:#ff6b6b22;color:#ff6b6b">HL</span>
+  </div>
+</div>
+
+<div id="main"></div>
+
+<div id="footer" class="no-select">IB Business Management 2024 Syllabus · All content aligned to AO1–AO4 · HL extensions included · Not affiliated with the IB</div>
+
+<script>
+'use strict';
+
+// ─── PROTECTIONS (deterrent only) ──────────────────────────────────────────
+// Client-side code can always be read/edited by whoever runs it — this raises
+// the bar for casual copying/tampering, it does not make the app secure.
+
+document.addEventListener('contextmenu', (e) => e.preventDefault());
+
+document.addEventListener('keydown', (e) => {
+  const blocked =
+    e.key === 'F12' ||
+    (e.ctrlKey && e.key.toLowerCase() === 'u') ||
+    (e.ctrlKey && e.key.toLowerCase() === 's') ||
+    (e.ctrlKey && e.shiftKey && ['i', 'j', 'c'].includes(e.key.toLowerCase()));
+  if (blocked) { e.preventDefault(); e.stopPropagation(); }
+});
+
+(() => {
+  let dtOpen = false;
+  let overlay = null;
+  const threshold = 160;
+  function checkDevTools() {
+    const widthDiff = window.outerWidth - window.innerWidth;
+    const heightDiff = window.outerHeight - window.innerHeight;
+    const open = widthDiff > threshold || heightDiff > threshold;
+    if (open !== dtOpen) {
+      dtOpen = open;
+      if (overlay) overlay.classList.toggle('active', open);
+    }
+  }
+  window.addEventListener('load', () => {
+    overlay = document.getElementById('dt-overlay');
+    setInterval(checkDevTools, 1000);
+  });
+})();
+
+// ─── DATA ─────────────────────────────────────────────────────────────────────
+
+const UNITS = [
+  { id:1, title:"Unit 1", subtitle:"Introduction to Business Management", color:"#4a3418", accent:"#e3a857" },
+  { id:2, title:"Unit 2", subtitle:"Human Resource Management",           color:"#5c2e1f", accent:"#e07856" },
+  { id:3, title:"Unit 3", subtitle:"Finance & Accounts",                  color:"#0f3d38", accent:"#2a9d8f" },
+  { id:4, title:"Unit 4", subtitle:"Marketing",                           color:"#3d2547", accent:"#b07cc6" },
+  { id:5, title:"Unit 5", subtitle:"Operations Management",               color:"#1a472a", accent:"#52b788" },
+];
+
+const MISTAKES = {
+  1:[
+    {title:"Mission vs Vision", mistake:"Confusing mission (current purpose) with vision (future aspiration). Students write them interchangeably.", fix:"Mission = what we do NOW. Vision = where we want TO BE. McDonald's vision is 'to be the best quick service restaurant' — that's a future aspiration."},
+    {title:"Strategic vs Tactical Objectives", mistake:"Treating all objectives as the same level. Students don't link SMART criteria to tactical objectives specifically.", fix:"Strategic = long-term, whole organisation. Tactical = short-term, departmental, SMART. Always ask: which level of the hierarchy makes this decision?"},
+    {title:"Stakeholder Conflict", mistake:"Listing stakeholders without explaining the conflict. 'Shareholders want profit, employees want wages' — no actual conflict shown.", fix:"The conflict is the TRADE-OFF. Higher wages = lower profit = lower dividends. You must show the mechanism of conflict, not just two opposing wants."},
+    {title:"Franchising vs Licensing", mistake:"Confusing franchising (entire business model) with licensing (just IP rights). Both involve a fee but are fundamentally different.", fix:"Franchise = franchisor gives full system (brand + processes + training + support). License = licensor gives right to USE IP only. McDonald's is a franchise; a software company grants licences."},
+    {title:"Economies vs Diseconomies", mistake:"Claiming economies of scale reduce TOTAL costs. They reduce UNIT (average) costs.", fix:"Economies of scale = unit cost falls as output rises. Total costs still rise. Always specify: per-unit cost, not total cost."},
+    {title:"Internal vs External Growth (HL)", mistake:"Classifying joint ventures as internal growth because 'both companies are involved together'.", fix:"Joint ventures, M&As, franchising, strategic alliances = ALL external growth. Internal growth = organic, using own resources (opening new branches, R&D)."},
+  ],
+  2:[
+    {title:"Span of Control Direction", mistake:"Saying a wider span of control means MORE levels of hierarchy. It's the opposite.", fix:"Wider span = fewer levels needed = FLATTER structure. Narrower span = MORE levels needed = TALLER structure."},
+    {title:"Delegation ≠ Abdication", mistake:"Describing delegation as the manager 'giving up' responsibility. The manager retains ultimate accountability.", fix:"Delegation = authority is shared; RESPONSIBILITY remains with the delegating manager. The subordinate is accountable for the task; the manager is accountable for the outcome."},
+    {title:"Herzberg: Hygiene ≠ Motivators", mistake:"Saying salary motivates according to Herzberg. It does NOT motivate — it only prevents dissatisfaction.", fix:"Hygiene factors (salary, conditions, job security) = prevent dissatisfaction ONLY. True motivators = achievement, recognition, responsibility, advancement. A pay rise stops complaints; it does not drive performance."},
+    {title:"Maslow Hierarchy Application", mistake:"Applying Maslow mechanically without checking which level is UNMET. Students say 'meet social needs' without checking if safety needs are already unmet.", fix:"Maslow's theory says you cannot motivate at a higher level until lower levels are met. Identify the LOWEST unmet need in the stimulus, then recommend how to address it."},
+    {title:"Labour Turnover Formula (HL)", mistake:"Using the wrong numerator. Students put 'number of employees' instead of 'number leaving'.", fix:"Labour turnover = (Number of staff leaving ÷ Average number of staff) × 100. Check: the numerator is LEAVERS, not total workforce."},
+    {title:"Corporate Culture (HL)", mistake:"Treating culture as a 'nice to have' rather than a strategic variable. Missing cultural clashes in M&A contexts.", fix:"Culture shapes strategy execution. In mergers, Handy's Gods of Management can explain clashes: Zeus (power) culture vs Apollo (role) culture = conflict over decision-making. Must link culture TYPE to the specific clash described."},
+  ],
+  3:[
+    {title:"Profit vs Cash Flow", mistake:"Treating profit and cash flow as the same thing. 'The business is profitable so it has cash.'", fix:"A business can be profitable but insolvent if customers don't pay (debtors). Cash flow = actual money movement. Profit = revenue minus costs on an accruals basis. They diverge because of timing differences."},
+    {title:"Gross Profit Margin Formula", mistake:"Using net profit in the GPM calculation, or forgetting to multiply by 100.", fix:"GPM = (Gross Profit ÷ Revenue) × 100. Gross profit = Revenue − Cost of Sales ONLY. Do NOT deduct overheads at this stage."},
+    {title:"ROCE Denominator", mistake:"Using total assets or total equity instead of capital employed.", fix:"ROCE = (Operating Profit ÷ Capital Employed) × 100. Capital Employed = Total Assets − Current Liabilities (or Non-current liabilities + Equity). Show the formula before substituting numbers."},
+    {title:"Cash Flow Forecast Errors", mistake:"Writing 'net profit' instead of 'net cash flow'. Using profit terminology in a cash flow forecast.", fix:"Never write 'profit' in a cash flow. The rows are: Total Cash Inflows, Total Cash Outflows, Net Cash Flow, Opening Balance, Closing Balance. Opening balance of month 2 = Closing balance of month 1."},
+    {title:"ARR Calculation (Investment Appraisal)", mistake:"Dividing by total investment instead of average investment, or using total profit instead of average annual profit.", fix:"ARR = (Average Annual Profit ÷ Average Investment) × 100. Average annual profit = Total net returns ÷ Project life. Average investment = (Initial investment + Scrap value) ÷ 2."},
+    {title:"Variance Labels — HL Budgets", mistake:"Labelling cost variances incorrectly. Students mark a cost OVER budget as Favourable.", fix:"Revenue over budget = Favourable (F). Revenue under budget = Adverse (A). Cost over budget = Adverse (A). Cost under budget = Favourable (F). Think: is this GOOD for profit?"},
+    {title:"Depreciation Methods (HL)", mistake:"Applying straight-line depreciation to assets with uneven usage patterns, or miscalculating the units-of-production rate.", fix:"Straight-line: (Cost − Residual value) ÷ Useful life. Units of production: (Cost − Residual) ÷ Total expected units × Units produced this period. Use units-of-production when asset use varies year-to-year."},
+    {title:"Efficiency Ratios (HL)", mistake:"Confusing debtor days and creditor days direction. Students say 'higher debtor days = better'.", fix:"Higher debtor days = WORSE (money owed to you longer). Lower creditor days = WORSE (you pay suppliers faster, harming cash flow). Ideal: low debtor days, high creditor days."},
+  ],
+  4:[
+    {title:"Market Share vs Market Growth", mistake:"Confusing a business's market share (%) with the rate of market growth (%). Students say 'market share grew by 5%' when they mean market size grew.", fix:"Market share = (firm's sales ÷ total market sales) × 100. Market growth = % change in total market size. A firm's share can fall even if the market grows."},
+    {title:"BCG Matrix Quadrants", mistake:"Placing products incorrectly. Students put a low share/high growth product as a 'Cash Cow'.", fix:"Cash Cow = HIGH share, LOW growth. Star = HIGH share, HIGH growth. Question Mark = LOW share, HIGH growth. Dog = LOW share, LOW growth. Always check BOTH axes before classifying."},
+    {title:"Price Elasticity (HL)", mistake:"Forgetting the negative sign convention, or confusing elastic/inelastic with the revenue impact.", fix:"PED is always negative (inverse relationship). |PED| > 1 = elastic (cut price → revenue rises). |PED| < 1 = inelastic (cut price → revenue falls). Luxury goods tend to be elastic; necessities inelastic."},
+    {title:"Extension Strategies vs New PLC", mistake:"Treating extension strategies as starting a new product life cycle. They extend the EXISTING cycle's maturity stage.", fix:"Extension strategies (price cuts, new markets, redesign, promotion boosts) delay decline on the SAME product. A genuinely new product starts its own PLC from introduction."},
+    {title:"Above/Below/Through the Line", mistake:"Calling all digital advertising 'above the line' because it reaches a mass audience.", fix:"ATL = mass media (TV, radio, newspapers). BTL = targeted (direct mail, loyalty schemes, sponsorship). TTL = integrated campaign using both (social media straddles both). The distinction is about mass vs targeted, not digital vs traditional."},
+    {title:"Sales Forecasting (HL)", mistake:"Claiming sales forecasts are facts. Students write 'sales WILL BE...' instead of 'sales are FORECAST to be...'.", fix:"Forecasts are estimates based on past data + assumptions. Always discuss limitations: past ≠ future, external shocks, seasonal adjustments. Use hedging language: 'the data suggests', 'it is projected'."},
+  ],
+  5:[
+    {title:"Break-Even Quantity Formula", mistake:"Dividing fixed costs by selling price instead of contribution per unit.", fix:"BEQ = Fixed Costs ÷ Contribution per unit. Contribution per unit = Selling Price − Variable Cost per unit. Do NOT divide by selling price alone."},
+    {title:"Margin of Safety Sign", mistake:"Giving a negative margin of safety when output is below BEQ, but not explaining what it means.", fix:"If actual output > BEQ: MoS = Actual output − BEQ (positive = safe). If actual output < BEQ: MoS is negative = the business is making a LOSS and is THIS FAR below break-even. Always state what the sign means."},
+    {title:"Total Contribution vs Total Profit", mistake:"Confusing total contribution with profit. 'Total contribution is $50,000 so the business made $50,000 profit.'", fix:"Total Contribution = Revenue − Total Variable Costs. Profit = Total Contribution − Fixed Costs. You must subtract fixed costs to find profit."},
+    {title:"JIT vs JIC (HL)", mistake:"Saying JIT is always better because it 'reduces waste'. Missing the risk dimension.", fix:"JIT eliminates holding costs and waste but requires perfect supplier reliability. JIC holds buffer stock = higher costs but lower stockout risk. The right choice depends on demand predictability and supply chain reliability."},
+    {title:"Stock Control Charts (HL)", mistake:"Mixing up reorder level, reorder quantity, and lead time on charts. Drawing the reorder line at the wrong point.", fix:"Reorder level = stock level that TRIGGERS an order. Lead time = gap between ordering and delivery. Reorder quantity = amount ordered. The stock line should touch the minimum stock level just as the new delivery arrives."},
+    {title:"Quality Control vs Quality Assurance", mistake:"Using these terms interchangeably. 'Quality control means checking products for defects' — that's not wrong, but students miss the key distinction.", fix:"QC = checking FINISHED products (reactive, finds defects after production). QA = building quality INTO the process at every stage (proactive, prevents defects). TQM is a culture, not a procedure."},
+    {title:"Break-Even Chart Labels", mistake:"Leaving axes unlabelled, or labelling TR as 'Sales' and TC as 'Costs' without specifying total.", fix:"Y-axis = Costs and Revenue ($). X-axis = Output/Units. Lines must be labelled: Total Revenue (TR), Total Costs (TC), Fixed Costs (FC). Break-even point must be identified at the TR/TC intersection."},
+  ],
+};
+
+const QUESTIONS = {
+  1:[
+    {id:"1_1",level:"SL+HL",marks:2,type:"short",
+     question:"Define the term 'franchise'. [2 marks]",
+     modelAnswer:"A franchise is a business arrangement where a franchisor grants a franchisee the right to use its established brand, business model, and processes in exchange for a fee and/or royalties. The franchisee operates the business under the franchisor's system and standards.",
+     keywords:["franchisor","franchisee","brand","fee","royalt","model"],
+     markingGuidance:"Award [1] for identifying the core relationship (franchisor grants rights to franchisee). Award [1] for mentioning the commercial arrangement (fee/royalties) or the use of established brand/model."},
+    {id:"1_2",level:"SL+HL",marks:4,type:"short",
+     question:"Explain two reasons why a business might choose to remain small rather than grow. [4 marks]",
+     modelAnswer:"1. Owner control: A small business owner can maintain direct personal control over all operations and decisions. Growth through hiring managers or expanding operations would dilute this control and potentially alter the business culture the owner values.\n\n2. Niche market fit: Some businesses serve a niche market that is too small to support a larger operation. A specialist artisan bakery, for example, relies on its exclusive, handcrafted identity — scaling up would require mass production and destroy the USP that differentiates it.",
+     keywords:["control","niche","personal","owner","usp","market size","identity"],
+     markingGuidance:"Mark as [2+2]. Award [1] for stating a valid reason and [1] for explaining how/why it leads to staying small, with logical development."},
+    {id:"1_3",level:"SL+HL",marks:4,type:"short",
+     question:"Using the Ansoff Matrix, explain two growth strategies a business entering a new overseas market with its existing product could consider. [4 marks]",
+     modelAnswer:"1. Market Development: The business takes its existing product into a new geographic market (the overseas market). This involves researching new customer segments and adapting distribution channels while keeping the core product the same. Moderate risk since the product is proven but the market is unfamiliar.\n\n2. Diversification: The business could also develop a new product specifically designed for the preferences of the new overseas market. This is the highest-risk Ansoff strategy as both the product and market are new, but offers the highest potential returns if successful.",
+     keywords:["ansoff","market development","existing product","new market","risk","diversification"],
+     markingGuidance:"Award [1] for correctly naming the Ansoff quadrant and [1] for explaining its application to the overseas expansion scenario. Maximum [2] per strategy."},
+    {id:"1_4",level:"HL",marks:6,type:"short",
+     question:"Explain how stakeholder conflict can arise during a period of significant organisational change. Refer to at least three different stakeholder groups. [6 marks]",
+     modelAnswer:"Stakeholder conflict during change arises because different groups have incompatible interests that are disrupted by the change.\n\n• Shareholders may support automation as it reduces labour costs and improves profit margins and dividends.\n• Employees face redundancy or retraining, creating conflict with management over job security and fair treatment — an ethical dimension.\n• Customers may benefit from lower prices but worry about product quality if automation reduces customisation.\n• The local community may lose employment, creating tension with the company's CSR commitments.\n\nThe conflict mechanism: resources (profit, wages, investment budget) are finite. A decision that benefits one stakeholder group often comes at a direct cost to another. Management must use stakeholder mapping to prioritise and negotiate compromises.",
+     keywords:["shareholder","employee","customer","community","conflict","trade-off","mechanism","csr"],
+     markingGuidance:"Mark as [3+3] or holistically. Award up to [2] for identifying stakeholders and their conflicting interests. Award up to [2] for explaining the mechanism of conflict. Award up to [2] for application with developed argument. Maximum [6]."},
+    {id:"1_5",level:"SL+HL",marks:4,type:"short",
+     question:"Distinguish between a business's mission statement and its vision statement, using an example of each. [4 marks]",
+     modelAnswer:"A mission statement describes a business's core purpose and what it does now — its reason for existing, often including its products, customers and values. A vision statement describes the business's future aspiration — where it wants to be at some point in the future, which may not yet be achievable.\n\nFor example, a car manufacturer's mission might state that it 'designs and builds safe, affordable vehicles for families worldwide', describing its current activity, while its vision might state that it aims 'to be the world's most sustainable car company by 2040' — a forward-looking aspiration rather than a present description.",
+     keywords:["mission","current","purpose","now","vision","future","aspiration","example"],
+     markingGuidance:"Award [1] for correctly defining mission statement (current purpose). Award [1] for correctly defining vision statement (future aspiration). Award [1] each for a relevant, distinct example of a mission and a vision statement. Do not award marks if mission and vision are used interchangeably."},
+    {id:"1_6",level:"SL+HL",marks:4,type:"short",
+     question:"Outline two advantages of operating as a public limited company (plc) rather than as a private limited company. [4 marks]",
+     modelAnswer:"1. Access to capital: A plc can raise substantial finance by selling shares to the general public on a stock exchange, allowing it to fund large-scale investment or expansion that a private limited company — restricted to a smaller group of invited shareholders — could not easily match.\n\n2. Enhanced status and credibility: Being listed on a stock exchange can raise a plc's public profile and reputation, making it easier to attract suppliers, customers, and high-calibre employees who see the business as more established and transparent due to its public reporting requirements.",
+     keywords:["shares","public","stock exchange","capital","finance","status","credibility","limited liability"],
+     markingGuidance:"Mark as [2+2]. Award [1] for identifying a valid advantage of plc status and [1] for developed explanation of why it benefits the business, compared with private limited company status."},
+    {id:"1_7",level:"SL+HL",marks:6,type:"short",
+     question:"Using STEEPLE analysis, explain two external factors that could affect a business planning to expand into a new international market. [6 marks]",
+     modelAnswer:"1. Economic factors: The business must consider the target country's economic conditions, such as exchange rate volatility, income levels and rates of economic growth. A weakening local currency, for example, would increase the cost of importing goods or repatriating profits, directly affecting the profitability of the expansion.\n\n2. Legal/political factors: Different countries have different regulations on trade tariffs, employment law and business registration. A business entering a market with high import tariffs or strict local-ownership requirements may face higher costs or be forced into a joint venture rather than full ownership, changing its market entry strategy.",
+     keywords:["steeple","economic","legal","political","exchange rate","tariff","regulation","external"],
+     markingGuidance:"Award up to [3] per factor: [1] for correctly identifying a STEEPLE category, [1] for explaining the factor in the context of international expansion, [1] for a developed consequence for the business. Maximum [6]. Any two distinct STEEPLE categories are acceptable."},
+    {id:"1_8",level:"HL",marks:6,type:"short",
+     question:"Explain how a business could use Porter's generic strategies to achieve competitive advantage through a differentiation strategy. [6 marks]",
+     modelAnswer:"Porter's generic strategies suggest a business can achieve competitive advantage either through cost leadership (being the lowest-cost producer) or differentiation (offering a unique product that customers value and will pay a premium for), applied across either a broad or narrow (focus) market.\n\nTo pursue differentiation, a business would invest in features that distinguish its product from competitors — such as superior quality, innovative design, strong branding, or exceptional customer service — allowing it to charge a higher price without losing customers to lower-priced rivals. For example, a technology company might differentiate through cutting-edge design and a premium brand image rather than competing on price.\n\nThe risk is that differentiation requires ongoing investment (in R&D, marketing or quality control) to maintain the perceived uniqueness, and competitors may eventually imitate the point of difference, eroding the advantage — Porter warns that a business attempting to combine cost leadership and differentiation without a clear focus risks becoming 'stuck in the middle', achieving neither advantage effectively.",
+     keywords:["porter","differentiation","cost leadership","unique","premium price","competitive advantage","stuck in the middle"],
+     markingGuidance:"Award [1] for correctly outlining Porter's generic strategies framework. Award up to [3] for explaining how differentiation is achieved and applied to a business example. Award up to [2] for a developed limitation/risk (e.g. imitation, cost of maintaining differentiation, 'stuck in the middle'). Maximum [6]."},
+    {id:"1_essay",level:"SL+HL",marks:10,type:"essay",
+     question:"🖊  TEACHER-MARKED ESSAY\n\nDiscuss whether external growth strategies are more beneficial than internal growth strategies for a large multinational company (MNC) seeking to expand into emerging markets. [10 marks]",
+     essayGuidance:"A strong answer will:\n• Define both internal and external growth clearly\n• Discuss at least 2–3 external methods (M&A, joint ventures, franchising, strategic alliances) with benefits AND drawbacks in the MNC/emerging market context\n• Discuss internal growth benefits (control, culture preservation, sustainable financing)\n• Integrate at least one concept (Change, Ethics, or Sustainability) meaningfully\n• Acknowledge limitations of the argument and stimulus data\n• Reach a substantiated judgement — not just 'it depends'\n\n9–10: Clear focus, balanced argument, stimulus integration, limitations noted, well-substantiated judgement.\n7–8: Good balance, relevant tools used, some stimulus reference, judgement present.\n5–6: Some balance, tools mentioned but not fully applied.\n3–4: Mostly one-sided, limited application.\n1–2: Little understanding of the question demands."},
+  ],
+  2:[
+    {id:"2_1",level:"SL+HL",marks:2,type:"short",
+     question:"Define the term 'delayering'. [2 marks]",
+     modelAnswer:"Delayering is the process of removing one or more levels from an organisational hierarchy, resulting in a flatter structure with fewer managers and wider spans of control. It is often implemented to reduce costs and improve communication speed.",
+     keywords:["removing","level","hierarch","flatter","wider span","cost"],
+     markingGuidance:"Award [1] for identifying removal of hierarchical levels. Award [1] for the consequence (flatter structure, wider span of control, or cost reduction)."},
+    {id:"2_2",level:"SL+HL",marks:4,type:"short",
+     question:"Using Herzberg's motivation–hygiene theory, explain why a pay rise alone may not increase long-term employee motivation. [4 marks]",
+     modelAnswer:"According to Herzberg, pay (salary) is a hygiene factor, not a motivator. Hygiene factors, when absent or insufficient, cause dissatisfaction — so paying below market rates will demotivate employees. However, once pay reaches an acceptable level, increasing it further does NOT generate positive motivation or drive greater effort. True motivators — such as recognition, achievement, advancement and meaningful work — are intrinsic to the job itself. A pay rise satisfies the absence of dissatisfaction but does not activate the motivators that drive performance. Management must also redesign jobs to include greater responsibility, autonomy, and growth opportunities.",
+     keywords:["hygiene","dissatisfaction","not a motivator","motivator","recognition","achievement","advancement","intrinsic"],
+     markingGuidance:"Award [1] for correctly identifying pay as a hygiene factor. Award [1] for explaining hygiene factors prevent dissatisfaction but do not motivate. Award [1] for naming true motivators. Award [1] for the implication that management must use motivators to build lasting performance."},
+    {id:"2_3",level:"SL+HL",marks:4,type:"short",
+     question:"Describe the key features of a tall organisational structure and explain one advantage and one disadvantage for a business operating with such a structure. [4 marks]",
+     modelAnswer:"A tall organisational structure has many levels of hierarchy and a narrow span of control at each level. Managers oversee few subordinates, creating a long chain of command from the CEO to front-line employees.\n\nAdvantage: Clearer lines of authority and closer supervision of employees, which can improve quality control and accountability, particularly in complex or high-risk operations.\n\nDisadvantage: Communication is slower and more distorted as messages pass through many layers, potentially causing delays in decision-making and reducing the organisation's ability to respond quickly to change.",
+     keywords:["many levels","narrow span","chain of command","supervision","slow communication","hierarchy"],
+     markingGuidance:"Award [1] for correct description of tall structure. Award [1] each for advantage and disadvantage with explanation. Maximum [4]."},
+    {id:"2_4",level:"HL",marks:6,type:"short",
+     question:"A company is planning to merge with a competitor. Explain three challenges the merged company may face as a result of cultural clashes. [6 marks]",
+     modelAnswer:"1. Decision-making conflict: If one company has a Zeus (power) culture with centralised autocratic decision-making and the other an Apollo (role) culture with formal bureaucratic procedures, employees will clash over how decisions are made — creating confusion and delay.\n\n2. Communication breakdown: Different norms around formality, hierarchy and communication channels lead to misunderstandings and reduced information flow.\n\n3. Resistance to change and talent loss: Employees who feel their cultural identity is threatened may resist integration, reduce productivity, or leave. High turnover of key talent post-merger is a documented consequence of cultural incompatibility.",
+     keywords:["culture","handy","zeus","apollo","decision","communication","resistance","integration","talent"],
+     markingGuidance:"Mark as [2+2+2]. Award [1] for identifying a valid cultural clash challenge and [1] for explaining the mechanism by which it disrupts the merged business. Cultural theory reference (Handy) improves quality but is not required for full marks."},
+    {id:"2_5",level:"HL",marks:4,type:"short",
+     question:"Outline two methods of internal recruitment a business could use to fill a management vacancy, and explain one advantage of internal recruitment over external recruitment. [4 marks]",
+     modelAnswer:"Two methods of internal recruitment include: promoting an existing employee from a lower position into the vacant management role, and advertising the vacancy internally (e.g. on a staff noticeboard or intranet) so existing employees can apply before the role is opened to external candidates.\n\nAdvantage: Internal recruitment is generally faster and cheaper than external recruitment, as it avoids the costs of external advertising and extensive interviewing, and the candidate is already familiar with the organisation's culture, systems and colleagues, reducing induction time and the risk of a poor cultural fit.",
+     keywords:["internal","promotion","advertise","faster","cheaper","culture","familiar","induction"],
+     markingGuidance:"Award [1] each for two valid internal recruitment methods, up to [2]. Award [1] for a valid advantage and [1] for explaining why it benefits the business compared with external recruitment. Maximum [4]."},
+    {id:"2_6",level:"SL+HL",marks:4,type:"short",
+     question:"Explain two barriers to effective communication within a large, multinational organisation. [4 marks]",
+     modelAnswer:"1. Language and cultural differences: Employees across different countries may not share a common first language, leading to messages being misunderstood or lost in translation, especially where technical or idiomatic terms are used.\n\n2. Long chains of command: In a large, tall organisational structure, messages passed through many levels of hierarchy can become distorted or delayed, as each layer may filter, summarise or reinterpret the message before passing it on, reducing accuracy by the time it reaches its destination.",
+     keywords:["language","culture","chain of command","hierarchy","distort","delay","misunderstand"],
+     markingGuidance:"Mark as [2+2]. Award [1] for identifying a valid communication barrier and [1] for explaining why/how it disrupts communication in a large multinational context."},
+    {id:"2_7",level:"SL+HL",marks:6,type:"short",
+     question:"Compare and contrast autocratic and democratic leadership styles, referring to their impact on employee motivation. [6 marks]",
+     modelAnswer:"An autocratic leader makes decisions unilaterally, with little or no consultation of employees, and expects instructions to be followed without question. This can be effective in situations requiring fast decision-making or where tasks are highly standardised, but it typically has a negative effect on motivation, as employees may feel undervalued and disengaged, particularly those with higher-level esteem or self-actualisation needs (Maslow).\n\nA democratic leader consults employees and involves them in decision-making, delegating meaningful responsibility. This tends to improve motivation, as employees feel trusted and their contribution is recognised (a Herzberg motivator), which can increase commitment and reduce staff turnover. However, democratic leadership can slow down decision-making, which may be a disadvantage in a crisis or highly time-sensitive situation.\n\nBoth styles therefore have context-dependent effects: the appropriate style depends on factors such as the urgency of the decision, the skill level of the workforce, and the organisational culture.",
+     keywords:["autocratic","democratic","consult","delegate","motivation","maslow","herzberg","decision-making speed"],
+     markingGuidance:"Award up to [2] for accurately describing each style (total [4]). Award up to [2] for a developed comparison of their differing impact on motivation, ideally with theoretical reference (Maslow/Herzberg). Maximum [6]."},
+    {id:"2_8",level:"HL",marks:4,type:"short",
+     question:"Explain how a business could use collective bargaining to resolve a dispute with its workforce. [4 marks]",
+     modelAnswer:"Collective bargaining is the process of negotiation between an employer (or a group of employers) and a recognised trade union or employee representative body, acting on behalf of employees as a group rather than negotiating with each individual separately.\n\nIn a dispute — for example over pay or working conditions — the trade union would present the collective demands of its members to management, and both sides would negotiate towards a compromise, such as a phased pay increase or improved conditions in exchange for productivity commitments. This process can resolve the dispute without resorting to more disruptive industrial action such as a strike, because it gives employees a stronger, unified voice than they would have negotiating individually, while giving management a single, organised counterpart to negotiate with.",
+     keywords:["collective bargaining","trade union","negotiation","dispute","representative","compromise","strike"],
+     markingGuidance:"Award [1] for correctly defining collective bargaining. Award up to [3] for explaining how it would be used to resolve the specific dispute, including the negotiation process and the alternative it avoids (e.g. industrial action). Maximum [4]."},
+    {id:"2_essay",level:"SL+HL",marks:10,type:"essay",
+     question:"🖊  TEACHER-MARKED ESSAY\n\nWith reference to motivational theory, discuss whether financial rewards are more effective than non-financial rewards in motivating employees in a service-sector business. [10 marks]",
+     essayGuidance:"A strong answer will:\n• Define financial and non-financial rewards with examples\n• Apply at least TWO motivation theories (e.g. Herzberg, Maslow, Taylor; McClelland or Deci & Ryan for HL)\n• Argue FOR financial rewards (Taylor: piece rate; basic needs; short-term performance)\n• Argue AGAINST/FOR non-financial (Herzberg: hygiene vs motivators; job enrichment in service context)\n• Use the service-sector context meaningfully (customer interaction, job satisfaction, service quality)\n• Note limitations (individual differences, type of role, cost to employer)\n• Reach a clear, substantiated judgement\n\nHL students must reference at least one HL-only theory (McClelland, Deci & Ryan, or Equity/Expectancy)."},
+  ],
+  3:[
+    {id:"3_1",level:"SL+HL",marks:2,type:"short",
+     question:"The following data is available for a company:\n• Revenue: $500,000\n• Cost of Sales: $200,000\n• Operating Expenses: $150,000\n\nCalculate the gross profit margin (GPM). Show your working. [2 marks]",
+     modelAnswer:"Gross Profit = Revenue − Cost of Sales = $500,000 − $200,000 = $300,000\nGPM = (Gross Profit ÷ Revenue) × 100 = ($300,000 ÷ $500,000) × 100 = 60%",
+     keywords:["300,000","300000","60%","60 %"],
+     markingGuidance:"Award [1] for correctly calculating gross profit ($300,000). Award [1] for correct GPM (60%). Own figure rule applies."},
+    {id:"3_2",level:"SL+HL",marks:4,type:"short",
+     question:"A business has the following data:\n• Opening Balance January: $15,000\n• Cash Inflows: January $95,000 | February $110,000\n• Cash Outflows: January $130,000 | February $125,000\n\nConstruct a two-month cash flow forecast (January–February). [4 marks]",
+     modelAnswer:"Cash Flow Forecast\n\n                         January ($)   February ($)\nOpening Balance              15,000        (20,000)\nTotal Cash Inflows           95,000        110,000\nTotal Cash Outflows         130,000        125,000\nNet Cash Flow               (35,000)       (15,000)\nClosing Balance             (20,000)       (35,000)\n\nNote: February opening balance = January closing balance = ($20,000)",
+     keywords:["35,000","35000","20,000","20000","15,000","15000"],
+     markingGuidance:"Award [1] for correct January net cash flow (−$35,000). Award [1] for correct January closing balance (−$20,000). Award [1] for February opening balance correctly carried from January. Award [1] for correct February closing balance (−$35,000). OFR applies throughout."},
+    {id:"3_3",level:"SL+HL",marks:4,type:"short",
+     question:"A business is considering an investment of $80,000. Net cash inflows forecast: Year 1: $25,000 | Year 2: $30,000 | Year 3: $35,000.\n\n(i) Calculate the payback period. Show all working. [2 marks]\n(ii) Comment on whether payback period alone is sufficient for making this investment decision. [2 marks]",
+     modelAnswer:"(i) Cumulative cash flows:\nEnd Year 1: $25,000\nEnd Year 2: $55,000\nEnd Year 3: $90,000\nRemaining after Year 2: $80,000 − $55,000 = $25,000\nPayback in Year 3: $25,000 ÷ $35,000 × 12 = 8.57 months\nPayback Period ≈ 2 years and 8.6 months\n\n(ii) Payback period alone is insufficient because it ignores the time value of money — cash received in later years is worth less in real terms than the same amount today. It also ignores all cash flows after the payback point, so a project with strong returns in Year 4 or 5 would be unfairly penalised. ARR or NPV should be used alongside payback for a complete analysis.",
+     keywords:["2 year","8","9","cumulative","time value","limitation","arr","npv"],
+     markingGuidance:"(i) Award [1] for correct cumulative calculation. Award [1] for correct payback period (~2 years 8–9 months). (ii) Award [1] for a valid limitation of payback period. Award [1] for naming an alternative/complementary method."},
+    {id:"3_4",level:"HL",marks:6,type:"short",
+     question:"A company's budget versus actual data for Q3:\n• Budgeted Revenue: $200,000 | Actual Revenue: $185,000\n• Budgeted Costs: $140,000 | Actual Costs: $155,000\n\n(i) Calculate the revenue variance and cost variance, labelling each F or A. [2 marks]\n(ii) Calculate the budgeted profit and actual profit. [2 marks]\n(iii) Explain one possible reason for the adverse cost variance. [2 marks]",
+     modelAnswer:"(i) Revenue variance = $185,000 − $200,000 = −$15,000 → Adverse (A)\nCost variance = $155,000 − $140,000 = +$15,000 → Adverse (A)\n\n(ii) Budgeted profit = $200,000 − $140,000 = $60,000\nActual profit = $185,000 − $155,000 = $30,000\n\n(iii) One possible reason for the adverse cost variance: raw material prices may have increased unexpectedly due to supply chain disruption, causing variable costs to exceed the budgeted amount. This would increase cost of sales beyond the forecast, producing an adverse variance.",
+     keywords:["adverse","15,000","15000","60,000","60000","30,000","30000","cost variance","supply"],
+     markingGuidance:"(i) Award [1] for each correctly calculated and labelled variance. (ii) Award [1] for budgeted profit ($60,000), [1] for actual profit ($30,000). (iii) Award [1] for identifying a valid cause, [1] for explaining the mechanism linking it to the adverse cost variance."},
+    {id:"3_5",level:"SL+HL",marks:4,type:"short",
+     question:"Explain one advantage and one disadvantage of a business using a bank loan, compared with issuing shares, as a source of finance. [4 marks]",
+     modelAnswer:"Advantage of a bank loan: Unlike issuing shares, a bank loan does not dilute ownership or control of the business, as the lender does not receive voting rights or a share of future profits beyond the agreed interest — the original owners retain full decision-making control.\n\nDisadvantage of a bank loan: A bank loan must be repaid with interest regardless of whether the business is profitable, creating a fixed financial obligation that can strain cash flow, whereas dividends on shares are only paid when the business chooses to and can afford to, giving share finance more flexibility in difficult trading periods.",
+     keywords:["bank loan","interest","repay","control","ownership","dilute","shares","dividend","cash flow"],
+     markingGuidance:"Award [1] for a valid advantage and [1] for its explanation (comparative to shares). Award [1] for a valid disadvantage and [1] for its explanation. Maximum [4]."},
+    {id:"3_6",level:"SL+HL",marks:2,type:"short",
+     question:"A business has an Operating Profit of $45,000 and Capital Employed of $300,000. Calculate the Return on Capital Employed (ROCE). Show your working, including the correct unit. [2 marks]",
+     modelAnswer:"ROCE = (Operating Profit ÷ Capital Employed) × 100\nROCE = ($45,000 ÷ $300,000) × 100 = 15%",
+     keywords:["15%","15 %","operating profit","capital employed"],
+     markingGuidance:"Award [1] for correct application of the ROCE formula. Award [1] for the correct final answer (15%) with the % unit shown. Own figure rule applies."},
+    {id:"3_7",level:"SL+HL",marks:2,type:"short",
+     question:"Using the straight-line method, calculate the annual depreciation charge for an asset costing $60,000, with a residual value of $5,000 and a useful life of 5 years. Show your working. [2 marks]",
+     modelAnswer:"Annual depreciation = (Cost − Residual value) ÷ Useful life\nAnnual depreciation = ($60,000 − $5,000) ÷ 5 = $11,000 per year",
+     keywords:["11,000","11000","straight-line","cost","residual"],
+     markingGuidance:"Award [1] for correctly applying the straight-line depreciation formula. Award [1] for the correct final answer ($11,000), with the correct currency unit shown. Own figure rule applies."},
+    {id:"3_8",level:"HL",marks:4,type:"short",
+     question:"A business has a budgeted cost of $85,000 and an actual cost of $78,000 for the quarter. Calculate the cost variance, labelling it Favourable (F) or Adverse (A), and explain what this variance suggests about the business's cost control. [4 marks]",
+     modelAnswer:"Cost variance = Budgeted cost − Actual cost = $85,000 − $78,000 = $7,000, labelled Favourable (F), since actual costs were lower than budgeted, which is good for profit.\n\nThis favourable variance suggests the business controlled its costs more effectively than planned during the quarter — for example, through more efficient use of materials or labour, or because input prices fell below what was budgeted. However, it could also indicate the original budget was set too high (over-cautiously), or that spending was cut in ways that could affect quality or output in future periods, so the underlying cause should be investigated before treating the variance as purely positive.",
+     keywords:["7,000","7000","favourable","cost control","budget","efficient"],
+     markingGuidance:"Award [1] for correctly calculating the variance ($7,000) and [1] for correctly labelling it Favourable (F). Award up to [2] for a developed explanation of what the variance suggests, including a balanced consideration of its cause. Maximum [4]."},
+    {id:"3_essay",level:"SL+HL",marks:10,type:"essay",
+     question:"🖊  TEACHER-MARKED ESSAY\n\nDiscuss whether a new start-up business should prioritise managing cash flow over achieving profitability in its first two years of operation. [10 marks]",
+     essayGuidance:"A strong answer will:\n• Clearly distinguish profit from cash flow (accruals vs actual receipts)\n• Argue FOR prioritising cash flow: insolvency risk, survival imperative, creditor pressure, overdraft costs\n• Argue FOR prioritising profitability: investor confidence, access to finance, long-term sustainability\n• Use any financial data in the stimulus to support arguments\n• Integrate at least one concept (e.g. Sustainability — long-term viability; Ethics — obligations to creditors)\n• Acknowledge limitations of the data/assumptions\n• Reach a clear judgement with justification (likely: cash flow is the survival priority short-term, but both matter)\n\nNote: Students who explain WHY profitable businesses may face insolvency earn strong marks."},
+  ],
+  4:[
+    {id:"4_1",level:"SL+HL",marks:2,type:"short",
+     question:"Define the term 'market segmentation'. [2 marks]",
+     modelAnswer:"Market segmentation is the process of dividing a total market into distinct groups (segments) of consumers who share similar characteristics, needs, or buying behaviours, so that a business can target each segment with a tailored marketing mix.",
+     keywords:["divid","segment","group","similar","target","tailor","characteristic"],
+     markingGuidance:"Award [1] for the concept of dividing the market into distinct groups. Award [1] for the purpose — enabling targeted or tailored marketing strategies."},
+    {id:"4_2",level:"SL+HL",marks:4,type:"short",
+     question:"Explain how a business could use the BCG matrix to make product portfolio decisions. Refer to at least two BCG categories in your answer. [4 marks]",
+     modelAnswer:"The BCG matrix categorises a firm's products by market share and market growth rate, helping managers allocate investment strategically.\n\n• Cash Cows (high share, low growth): Generate surplus cash with little investment needed. Managers should 'milk' these to fund Stars or Question Marks.\n• Stars (high share, high growth): Strong potential but require heavy investment to maintain their position. Invest to consolidate leadership before market growth slows.\n• Question Marks (low share, high growth): Risky — managers must decide whether to invest heavily to grow share or divest.\n• Dogs (low share, low growth): Typically candidates for discontinuation to free up resources.",
+     keywords:["cash cow","star","question mark","dog","market share","market growth","invest","divest","milk"],
+     markingGuidance:"Award [1] per well-explained BCG category with a clear investment decision implication, up to [4]. General descriptions without investment implication max [2]."},
+    {id:"4_3",level:"SL+HL",marks:4,type:"short",
+     question:"Explain two limitations of primary market research for a small business with a limited budget. [4 marks]",
+     modelAnswer:"1. High cost relative to resources: Primary research methods such as surveys, interviews, and focus groups require significant time and money to design, administer, and analyse. For a small business with a limited budget, the cost of professional market research may be prohibitive, limiting sample size and research quality.\n\n2. Risk of researcher bias and small sample: With limited resources, the business may only be able to survey a small, non-representative sample. Results may reflect the views of a narrow group rather than the target market, leading to inaccurate conclusions and poor strategic decisions based on unreliable data.",
+     keywords:["cost","time","expensive","bias","sample","small","representative","primary"],
+     markingGuidance:"Mark as [2+2]. Award [1] for identifying a limitation and [1] for explaining the impact on research quality or business decisions."},
+    {id:"4_4",level:"HL",marks:6,type:"short",
+     question:"A product has the following data:\n• Current Price: $50 | Current Quantity Demanded: 1,000 units\n• New Price: $45 | New Quantity Demanded: 1,300 units\n\n(i) Calculate the price elasticity of demand (PED). Show all working. [2 marks]\n(ii) State whether demand is elastic or inelastic, and explain what this means for total revenue. [4 marks]",
+     modelAnswer:"(i) % change in quantity = (1300 − 1000) ÷ 1000 × 100 = +30%\n% change in price = (45 − 50) ÷ 50 × 100 = −10%\nPED = +30% ÷ −10% = −3\n\n(ii) |PED| = 3 > 1 → Demand is ELASTIC.\n\nSince demand is price elastic, a price reduction leads to a proportionally larger increase in quantity demanded, so total revenue will INCREASE.\n\nOriginal TR = $50 × 1,000 = $50,000\nNew TR = $45 × 1,300 = $58,500\nRevenue increases by $8,500 — confirming that lowering price is beneficial when demand is elastic.",
+     keywords:["ped","−3","-3","elastic","58,500","58500","revenue increase","30%","10%"],
+     markingGuidance:"(i) [1] for correct PED formula applied, [1] for correct answer (−3). (ii) [1] for correctly labelling elastic. [1] for stating revenue increases. [2] for demonstrating with TR figures and clear reasoning."},
+    {id:"4_5",level:"SL+HL",marks:4,type:"short",
+     question:"Outline two of the seven Ps of the marketing mix, other than price, that a new online clothing retailer should consider when planning its launch. [4 marks]",
+     modelAnswer:"1. Place: The retailer must decide how customers will access its products — for an online retailer, this means designing an easy-to-navigate website or app, and deciding on delivery methods and speed, since convenient access is central to the customer experience for an online-only business.\n\n2. Promotion: The retailer must decide how it will build awareness and persuade customers to buy, such as through social media advertising, influencer partnerships, or email marketing — channels that are especially effective for reaching an online clothing retailer's target audience where they already spend time.",
+     keywords:["place","promotion","product","people","process","physical evidence","marketing mix","online"],
+     markingGuidance:"Award [1] each for correctly identifying two of the seven Ps (other than price) and [1] each for a developed explanation applied to the online clothing retailer context. Maximum [4]. Any two valid Ps are acceptable."},
+    {id:"4_6",level:"SL+HL",marks:4,type:"short",
+     question:"Distinguish between market segmentation, targeting and positioning. [4 marks]",
+     modelAnswer:"Market segmentation is the process of dividing the total market into distinct groups of consumers who share similar characteristics or needs. Targeting is the subsequent decision of which of those segments the business will focus its marketing efforts on, based on factors such as segment size, growth potential and competition. Positioning is how the business then shapes customers' perception of its product relative to competitors within the chosen target segment, often communicated through its marketing mix and brand image.",
+     keywords:["segmentation","divide","targeting","select","positioning","perception","relative to competitors"],
+     markingGuidance:"Award [1] for correctly defining segmentation, [1] for targeting, [1] for positioning, and [1] for showing the logical sequence between the three (segment → target → position). Maximum [4]."},
+    {id:"4_7",level:"HL",marks:4,type:"short",
+     question:"Explain one benefit and one limitation of using sales forecasting for a business operating in a highly volatile market. [4 marks]",
+     modelAnswer:"Benefit: Sales forecasting allows a business to plan resources — such as staffing, stock levels and cash flow — in advance of expected demand, helping it avoid overproduction or stockouts and supporting more informed budgeting and investment decisions.\n\nLimitation: In a highly volatile market, forecasts rely on past data and assumptions that may quickly become inaccurate, as sudden changes such as new competitors, economic shocks or shifting consumer trends are difficult to predict — meaning the forecast may mislead decision-making if treated as a guaranteed outcome rather than an estimate.",
+     keywords:["forecast","plan","resource","volatile","past data","assumption","inaccurate","estimate"],
+     markingGuidance:"Award [1] for a valid benefit and [1] for its explanation. Award [1] for a valid limitation and [1] for its explanation, specifically addressing why volatility increases the risk of inaccuracy. Maximum [4]."},
+    {id:"4_8",level:"HL",marks:4,type:"short",
+     question:"Explain one challenge a business may face when adapting its marketing mix for international markets. [4 marks]",
+     modelAnswer:"One challenge is adapting the product and promotion elements of the marketing mix to different cultural norms, tastes, or legal requirements in each international market. For example, a food product's recipe, packaging, or advertising message that succeeds in one country may be culturally inappropriate, fail to appeal to local tastes, or even breach local advertising regulations in another — requiring the business to research and adjust its mix for each market rather than applying a single standardised approach, which increases costs and complexity for the business.",
+     keywords:["culture","adapt","local","product","promotion","regulation","standardis","cost","complexity"],
+     markingGuidance:"Award [1] for identifying a valid challenge. Award up to [3] for a developed explanation, applied with a relevant example, of why adapting the marketing mix internationally creates difficulty for the business. Maximum [4]."},
+    {id:"4_essay",level:"SL+HL",marks:10,type:"essay",
+     question:"🖊  TEACHER-MARKED ESSAY\n\nUsing the marketing mix, discuss whether a business should change its pricing strategy when entering a new competitive market. [10 marks]",
+     essayGuidance:"A strong answer will:\n• Clarify the 'competitive market' context and why pricing matters\n• Discuss at least 2–3 pricing strategies with pros AND cons (penetration, competitive, loss leader; contribution pricing and PED for HL)\n• Link pricing decisions to other Ps — the mix must be coherent\n• Discuss risks: price war, brand dilution, unsustainability of low-price strategy\n• Acknowledge limitations (product type unknown, competitor pricing, customer sensitivity)\n• Reach a substantiated judgement\n\nHL: Apply PED to justify pricing approach. Apply Hofstede if market is international."},
+  ],
+  5:[
+    {id:"5_1",level:"SL+HL",marks:2,type:"short",
+     question:"Define the term 'margin of safety'. [2 marks]",
+     modelAnswer:"The margin of safety is the difference between actual (or budgeted) output and the break-even quantity. It represents by how much output can fall before the business stops making a profit and begins to make a loss. It can be expressed in units or as a percentage of actual output.",
+     keywords:["actual output","break-even","fall","loss","units"],
+     markingGuidance:"Award [1] for the correct calculation concept (actual output − BEQ). Award [1] for explaining what it measures (how far output can fall before a loss occurs)."},
+    {id:"5_2",level:"SL+HL",marks:4,type:"short",
+     question:"A business has the following data:\n• Fixed Costs: $60,000\n• Selling Price per unit: $25\n• Variable Cost per unit: $15\n• Current Output: 8,000 units\n\n(i) Calculate the break-even quantity. [2 marks]\n(ii) Calculate the margin of safety. [1 mark]\n(iii) Calculate the profit or loss at current output. [1 mark]",
+     modelAnswer:"(i) Contribution per unit = $25 − $15 = $10\nBEQ = Fixed Costs ÷ Contribution per unit = $60,000 ÷ $10 = 6,000 units\n\n(ii) Margin of Safety = Actual Output − BEQ = 8,000 − 6,000 = 2,000 units\n\n(iii) Total Contribution = 8,000 × $10 = $80,000\nProfit = Total Contribution − Fixed Costs = $80,000 − $60,000 = $20,000",
+     keywords:["contribution","10","6,000 units","2,000 units","20,000"],
+     markingGuidance:"(i) [1] for contribution per unit ($10), [1] for BEQ = 6,000. (ii) [1] for MoS = 2,000 units. (iii) [1] for profit = $20,000. OFR applies throughout."},
+    {id:"5_3",level:"SL+HL",marks:4,type:"short",
+     question:"Explain two limitations of break-even analysis as a decision-making tool. [4 marks]",
+     modelAnswer:"1. Assumes all output is sold at a single constant price: In reality, businesses may offer discounts, sell through multiple channels at different prices, or fail to sell all units produced. This means the total revenue line may not be a straight line, reducing the accuracy of the break-even chart.\n\n2. Assumes variable costs rise proportionally with output: In practice, bulk discounts, economies of scale, or rising input prices mean variable costs per unit may change at different output levels, distorting the analysis.",
+     keywords:["constant price","sold","discount","variable cost","proportional","static","assumption","limitation"],
+     markingGuidance:"Mark as [2+2]. Award [1] for identifying a limitation and [1] for explaining why/how it reduces the reliability of break-even as a decision tool."},
+    {id:"5_4",level:"HL",marks:6,type:"short",
+     question:"A manufacturing business holds 4,000 units of buffer stock, has a reorder level of 6,000 units, and a lead time of 2 weeks. Weekly demand is 1,000 units.\n\n(i) Explain what the reorder level of 6,000 units tells the stock manager. [2 marks]\n(ii) Explain two advantages of using a Just-in-Time (JIT) stock system instead of the current approach. [4 marks]",
+     modelAnswer:"(i) The reorder level of 6,000 units means the stock manager should place a new order when stock falls to 6,000 units. Given a lead time of 2 weeks and weekly demand of 1,000 units, 2,000 units will be consumed before the new delivery arrives. The 6,000 unit trigger ensures enough stock remains above the 4,000 unit buffer, preventing stockouts during the delivery period.\n\n(ii) Advantage 1 — Eliminates holding costs: JIT means stock is delivered just as it is needed, so the business does not need to maintain a warehouse or pay for storage, insurance, or spoilage. This reduces costs and improves cash flow.\n\nAdvantage 2 — Reduces waste/obsolescence: Without excess stock, the business is less exposed to products going out of date or becoming technologically irrelevant. This is particularly valuable in fast-moving consumer goods or electronics sectors.",
+     keywords:["reorder","trigger","lead time","buffer","jit","holding cost","waste","obsolescence","cash flow"],
+     markingGuidance:"(i) [1] for explaining what the reorder level triggers, [1] for linking to lead time and buffer stock. (ii) Mark as [2+2]. Award [1] for each advantage and [1] for explaining its business impact."},
+    {id:"5_5",level:"SL+HL",marks:4,type:"short",
+     question:"Distinguish between job production and flow production, giving one advantage of each. [4 marks]",
+     modelAnswer:"Job production involves creating a single, unique product to a customer's specific requirements, completed from start to finish before moving to the next job — for example, a bespoke wedding cake. An advantage is that it allows a high degree of customisation, meeting individual customer needs precisely, which can command a premium price.\n\nFlow production involves producing large volumes of a standardised product on a continuous production line, with each stage adding value before passing to the next. An advantage is that it allows a business to benefit from economies of scale, lowering the unit cost of production as output increases, since specialised machinery and labour can be used efficiently and continuously.",
+     keywords:["job production","unique","customise","flow production","standardised","continuous","economies of scale"],
+     markingGuidance:"Award [1] for correctly describing job production and [1] for a valid advantage. Award [1] for correctly describing flow production and [1] for a valid advantage. Maximum [4]."},
+    {id:"5_6",level:"SL+HL",marks:4,type:"short",
+     question:"Outline two factors a business should consider when choosing the location for a new factory. [4 marks]",
+     modelAnswer:"1. Proximity to raw materials or suppliers: Locating close to key inputs reduces transportation costs and lead times, which is particularly important for businesses using heavy, bulky or perishable raw materials.\n\n2. Availability and cost of labour: The business should consider whether the local area has an adequately skilled workforce for its needs, and the prevailing wage rates in that area, since labour costs and availability directly affect the ongoing cost and quality of production.",
+     keywords:["raw materials","suppliers","transport cost","labour","skilled","wage","location"],
+     markingGuidance:"Mark as [2+2]. Award [1] for identifying a valid location factor and [1] for explaining its relevance to the business's decision. Maximum [4]."},
+    {id:"5_7",level:"HL",marks:4,type:"short",
+     question:"Explain one way a business could use contingency planning to reduce the impact of a crisis such as a major supplier failure. [4 marks]",
+     modelAnswer:"Contingency planning involves preparing in advance for potential crises so the business can respond quickly and minimise disruption when one occurs. To prepare for a major supplier failure, a business could identify and pre-qualify one or more backup suppliers in advance, so that if its main supplier fails to deliver, it can switch to the alternative supplier with minimal delay to production, rather than having to search for and vet a new supplier under time pressure during the crisis itself — reducing the length and severity of any resulting stock shortage or production stoppage.",
+     keywords:["contingency planning","crisis","backup supplier","prepare in advance","disruption","supply chain"],
+     markingGuidance:"Award [1] for correctly defining contingency planning. Award up to [3] for a developed explanation of how the specific contingency measure reduces the impact of the named crisis (supplier failure). Maximum [4]."},
+    {id:"5_8",level:"HL",marks:4,type:"short",
+     question:"Explain one advantage and one disadvantage of a business investing heavily in research and development (R&D) to maintain competitive advantage. [4 marks]",
+     modelAnswer:"Advantage: Sustained investment in R&D can allow a business to continually innovate — developing new products or improved processes ahead of competitors — helping it maintain a point of differentiation and defend its market position or price premium over time.\n\nDisadvantage: R&D is costly and its outcomes are uncertain — a business may invest heavily over several years without producing a commercially successful innovation, and in the meantime the funds committed to R&D are unavailable for other uses, such as marketing or dividends, which could strain cash flow if the R&D does not deliver a timely return.",
+     keywords:["r&d","research and development","innovation","competitive advantage","cost","uncertain","cash flow"],
+     markingGuidance:"Award [1] for a valid advantage and [1] for its explanation. Award [1] for a valid disadvantage and [1] for its explanation. Maximum [4]."},
+    {id:"5_essay",level:"SL+HL",marks:10,type:"essay",
+     question:"🖊  TEACHER-MARKED ESSAY\n\nDiscuss whether implementing lean production techniques is likely to benefit a business in the long run. [10 marks]",
+     essayGuidance:"A strong answer will:\n• Define lean production clearly (less waste, greater efficiency) and name specific methods (Kaizen, JIT, TQM, cradle-to-cradle for HL)\n• Benefits: cost reduction, quality improvement, employee engagement (Kaizen), sustainability credentials, competitive advantage\n• Drawbacks: implementation cost, resistance from employees, risk of stockouts (JIT), time to embed cultural change\n• Integrate at least one concept: Sustainability (waste reduction, circular economy), Ethics (labour practices), Change (resistance)\n• Acknowledge limitations: depends on industry, supplier reliability, company size\n• Reach a clear, justified judgement — likely conditional on context"},
+  ],
+};
+
+const PASTPAPERS = {
+  "1": [
+    {
+      "id": "pp1_1",
+      "sourceFile": "08gelnails.pdf",
+      "level": "SL+HL",
+      "marks": 4,
+      "question": "Gel Nails (GN) produces a range of nail beauty products for multinational retailers.\n(a) State two features of multinational companies. [2 marks]\n\nWith operations currently only in Singapore, where locals speak Malay and Singaporean Mandarin, GN is considering expanding its production in one of three locations: Vietnam, Indonesia or Thailand.\n(c) Outline one non-financial factor that GN needs to consider before choosing any of these locations to expand into. [2 marks]",
+      "markScheme": "(a) Features of multinational companies could include:\n• Having operations in two or more host countries.\n• Typically having the company's headquarters based in the home country, i.e., the country of origin.\n• Naturally large in size, as they usually have operations in many locations.\n• Centralized ownership and control in the home country (headquarters), although very large MNCs may have regional offices/headquarters.\n• Accept any other feature of MNCs, e.g., MNCs dealing with multiple currencies as they have operations in different overseas markets.\nAward [1 mark] for each appropriate feature, up to the maximum [2 marks].\n\n(c) Possible non-financial factors could include an outline of any one of the following:\n• Management preferences, e.g., familiarity with the different locations and potential language barriers (as Malay and Singaporean Mandarin are not widely spoken in Vietnam, Indonesia or Thailand).\n• The possible impacts on staffing, e.g., will staff be resistant to change (such as having to relocate from Singapore)?\n• Existing competition in overseas markets, such as manufacturers of beauty products in Vietnam, Indonesia and Thailand.\n• Political stability (or volatility) and its impact on local currencies, because fluctuations in the exchange rate will affect the profits of Gel Nails.\n• Accept any other valid financial or non-financial factor that is explained.\nAward [1 mark] if the answer briefly outlines one non-financial factor. Award [2 marks] for an answer that clearly outlines one non-financial factor, with appropriate terminology."
+    },
+    {
+      "id": "pp1_2",
+      "sourceFile": "p2exampracticequestionikearimapuriv2.pdf",
+      "level": "SL+HL",
+      "marks": 6,
+      "question": "IKEA is a multinational company (MNC) that designs and sells ready to assemble furniture, home appliances, kitchen services, and home services. IKEA's vision is \"To create a better everyday life for the many people\".\n(a) Define the term multinational company. [2 marks]\n\nIKEA was founded in Sweden in 1943. By the end of 2020, IKEA operated 422 stores in more than 50 countries worldwide. Apart from opening new stores in different countries, IKEA's growth strategy includes a wide product range of more than 9,500 products. IKEA has also broadened its markets by operating IKEA restaurants and coffee shops within many of its furniture retail stores.\n(b) Apply the Ansoff matrix to two growth strategies used by IKEA. [4 marks]",
+      "markScheme": "(a) A multinational company (MNC) is a business that operates in its home country as well as in at least one other country. The head office is located in one country (usually the home country), which coordinates the management functions across all offices.\nAward 1 mark for a basic definition. Award 2 marks for a full, clear definition similar to the answer above.\n\n(b) Possible responses include an explanation of:\n• Market penetration: Opening of more stores in India including Mumbai, Hyderabad, Pune, as well as adding online platforms.\n• Product development: IKEA's wide/broad product range, with over 9,500 products.\n• Market development: Expansion in different regions and countries of the world, including Europe, the USA, and India.\n• Diversification/related diversification: IKEA restaurants and coffee shops within its furniture retail stores.\nAward 1–2 marks for a response that shows some understanding of the Ansoff matrix; application is somewhat limited. Award 3–4 marks for a clear understanding of the Ansoff matrix, with accurate application of the growth strategies used by IKEA."
+    },
+    {
+      "id": "pp1_3",
+      "sourceFile": "p2exampracticequestionikearimapuriv2.pdf",
+      "level": "SL+HL",
+      "marks": 4,
+      "question": "IKEA uses a franchising strategy as part of its extensive expansion plans. Potential IKEA franchisees are evaluated through a stringent process, given further guidance, and trained accordingly. Successful franchise operators are authorized to market, sell (the entire product range) and operate (the sales channels) of IKEA goods. In return, IKEA franchisees pay the Inter IKEA Group an annual fee of 3% of their net sales revenues. Franchisees also provide valuable input based on their own consumer and local market insights.\n(c) Explain one advantage and one disadvantage to IKEA from its franchising strategy. [4 marks]",
+      "markScheme": "Possible advantages to IKEA include:\n• Franchisees pay the Inter IKEA Group an annual fee of 3% of their net sales revenue – this helps to increase the return on investment and profits for IKEA as a MNC.\n• Franchisees provide valuable input based on their consumer and local market insights, reducing the risk of failure due to limited local knowledge of overseas markets.\n• Faster expansion across the globe – IKEA operates 422 stores in more than 50 countries, made possible by its franchising growth strategy.\n• Economies of scale, and strengthening the brand name across all IKEA stores.\nPossible disadvantages to IKEA include:\n• IKEA may find it difficult to control the standards and quality of customer service across some franchisees, spread across the world.\n• The brand image of IKEA may be negatively impacted by just a handful of franchisees operating outside expected standards.\n• Franchising is a slower growth strategy (due to the stringent processes involved) when compared to mergers and acquisitions.\nMark as 2 + 2. Award 1 mark for identification of a relevant point (advantage and disadvantage) and 1 mark for application to IKEA."
+    },
+    {
+      "id": "pp1_4",
+      "sourceFile": "04paper2sectionbprotimunchgemaquintanilla.pdf",
+      "level": "SL+HL",
+      "marks": 4,
+      "question": "Lucas started his own business operating as a sole trader and launched a range of tasty high-protein bars called Proti-Munch (PM). PM benefits from having different distribution channels and is sold in different supermarkets, as well as health food and convenience stores around the UK. Lucas has formed a partnership together with his school friend, Roberto. Roberto is highly creative and will bring new ideas to the business.\n(b) Explain one advantage and one disadvantage of PM operating as a partnership. [4 marks]",
+      "markScheme": "Advantages could include:\n• Partnerships are able to raise more finance than sole traders.\n• Partners bring more skills and ideas, such as Roberto's creativity skills.\n• Partners can share the workload and have more possibilities of continuity.\n• Partnerships benefit from privacy; they only need to show their financial accounts to the tax authorities.\nDisadvantages could include:\n• Partners have unlimited liability and are legally responsible for any debts of PM.\n• Any profits are shared between the partners.\n• Decisions can take longer as both partners have to agree; disagreements may cause conflict and delay decision making.\n• Compared to limited liability companies, partnerships have less access to sources of finance.\nMark as 2+2. Award [1] for a relevant advantage/disadvantage, with an additional [1] for application to PM."
+    },
+    {
+      "id": "pp1_5",
+      "sourceFile": "22jimmyjerrybakerspaper2sectionbniveniveditabanerjeeepq.pdf",
+      "level": "SL+HL",
+      "marks": 2,
+      "question": "Jimmy & Jerry Bakers (J&JB) is a Singaporean privately held company. J&JB bakes a variety of cakes. Over the last ten years, J&JB has successfully implemented internal growth strategies and now has 11 branches across Singapore. It has a centralized baking facility that supplies cakes to all its branches every day.\n(a) Define the term internal growth. [2]",
+      "markScheme": "Internal growth occurs when a business gets larger by using its own resources, that is, it reinvests its profits in new products, new sales channels, or more stores, in order to increase sales.\nAward [1] for partial understanding which may include reference to a business getting larger using its own resources.\nAward [2] if the candidate provides an accurate and clear definition similar to the above, which includes reference to profit being reinvested in the growth of the business. Do not credit examples."
+    },
+    {
+      "id": "pp1_6",
+      "sourceFile": "19archenergyalexiaputellasepq.pdf",
+      "level": "SL+HL",
+      "marks": 4,
+      "question": "Alexia Putellas is the chief executive officer (CEO) of Arch Energy (AE). The publicly held company owns 45 gasoline stations in Spain and India. It also operates car rental services in Spain.\n(a) In the context of business management, describe the purpose of a decision tree. [2 marks]\n(b) State two features of a publicly held company. [2 marks]",
+      "markScheme": "(a) A decision tree is a quantitative decision-making tool that visually represents the possible outcomes of different strategic options for an organization [1]. It helps businesses to analyze financial risks and rewards, based on probabilities, thereby supporting decision makers in choosing the most profitable or least risky course of action [1].\n\n(b) • A publicly held company has its shares listed and traded on stock exchanges, making them accessible to the general public. [1]\n• Shareholders are only liable for the company's debts and obligations up to the amount they have invested, providing financial protection. [1]\n• Ownership is spread among shareholders, while management and day-to-day operations are controlled by a board of directors and executives. [1]\n• Publicly held companies are required to disclose detailed financial information and performance data to regulatory authorities and investors, ensuring transparency. [1]\n• Publicly held companies can raise large amounts of capital by issuing shares or bonds. [1]"
+    }
+  ],
+  "2": [
+    {
+      "id": "pp2_1",
+      "sourceFile": "02alverezcorporation.pdf",
+      "level": "SL+HL",
+      "marks": 8,
+      "question": "Alverez Corporation (AC) is a large manufacturer of microchips and computer accessories, established in 1990 in Mendoza, Argentina. The company has recently decided to implement a new capital-intensive production process that would increase efficiency and gain from additional economies of scale. However, many employees have resisted the change, making it difficult for the management team to fully implement the new production process.\n\nMany of AC's employees are afraid of losing their jobs or being forced to learn new skills. Some of the employees also claim that the management team has not clearly communicated the reasons for the change, leading to a lack of transparency and trust in the decision-making process. These employees are not aware of the benefits of the new production process.\nb. Explain two reasons for resistance to change at Alverez Corporation (AC). [4 marks]\nc. Explain the impact of resistance to change for AC. [4 marks]",
+      "markScheme": "b. Possible responses include an explanation of: fear of the unknown; lack of trust in AC's management team; a lack of understanding of the reasons or urgency for the change; poor communication about the benefits of change for employees. Accept any other relevant reason explained in context.\nMark as a 2+2. For each reason, award [1 mark] for a valid reason, plus [1 mark] for an accurate explanation, written in the context of the case study.\n\nc. Resistance to change can have a negative impact on an organization if not managed effectively and in a time efficient manner:\n• Slowing down or even preventing the implementation of the proposed change, meaning AC would not benefit from making progress.\n• It can lead to decreased efficiency, increased average costs, and a lack of competitiveness for AC.\n• It can also cause low staff morale and employee dissatisfaction, which could escalate into conflict and industrial action.\nAward [1–2 marks] for an answer that shows some understanding of the demands of the question. Award [3–4 marks] for an answer that shows good understanding, using relevant terminology and application throughout."
+    },
+    {
+      "id": "pp2_2",
+      "sourceFile": "20megoreandsienchansamikdasepq.pdf / 20megoreandsienchansamikdasms.pdf",
+      "level": "SL+HL",
+      "marks": 4,
+      "question": "Megore and Sienchan (MS) is a British multinational company founded in 1884, operating 1,519 stores across 62 international markets and employing over 78,000 people globally. MS is considering adopting a new management information system, which would necessitate a significant shift in MS's organizational structure. The company would need to implement organization by region, with regional managers appointed to hold individual retail stores accountable for their performance. However, this structural transformation is anticipated to increase MS's operational expenses, stemming from the duplication of administrative support functions.\n(c) Explain one advantage and one disadvantage of organization by region for MS. [4 marks]",
+      "markScheme": "Advantages of organization by region for MS may include:\n• Regional organization allows decision-making to be closer to the target markets, enabling MS to better respond to local consumer preferences and cultural differences.\n• Regional divisions can respond faster to local competition, regulatory changes, or economic conditions.\n• MS can allocate resources more efficiently to areas with the highest growth potential, fostering accountability and performance improvements at the regional level.\nDisadvantages of organization by region for MS may include:\n• Increased operational costs due to the duplication of administrative functions, such as HR, payroll, and inventory management across global regions.\n• Difficulties in maintaining a unified brand image and consistent service standards across different markets.\n• Regions might prioritize their individual performance over the overall goals of the multinational company, leading to inefficiencies or conflicting objectives.\nMark 2 + 2. Award [1] for a well-explained (dis)advantage and an additional [1] for clear and appropriate link to the case study."
+    },
+    {
+      "id": "pp2_3",
+      "sourceFile": "06karyasamikdasepq.pdf / 06karyasamikdasms.pdf",
+      "level": "SL+HL",
+      "marks": 2,
+      "question": "\"Karya\" is the Sanskrit word for \"work that gives dignity\". Established in 2017, Karya is a non-profit social enterprise that brings dignified, digital work to Indian people in rural areas, helping them out of poverty. It does this by enabling workers to complete simple tasks, such as local language speech generation, image creation, and video/image annotation. Once assigned Karya's tasks, workers typically earn between $60 and $80 per week – approximately five times their usual income.\n1. With reference to a business management motivation theory, describe one human need that Karya meets by providing opportunities to marginalized population to earn by performing tasks. [2 marks]",
+      "markScheme": "A relevant business management motivation theory is Maslow's hierarchy of needs. Karya provides short-term employment with relatively high earning potential, enabling workers to earn income with dignity and improve their financial security. This income can help to meet people's physiological needs (such as medical expenses) or even their social needs (such as hobbies).\nAccept alternative and appropriate theories, such as McClelland's theory of needs (need for achievement/affiliation) or Vroom's expectancy theory (valence of the monetary reward).\nMark as 1 + 1. Award [1] if the candidate uses an appropriate business management theory, and [1] for describing the relevant human need in the context of the case study. Award a maximum of [2]. Do not accept higher order needs such as self-esteem or self-actualization."
+    },
+    {
+      "id": "pp2_4",
+      "sourceFile": "Business_management_paper_2__TZ1_HL.pdf / Business_management_paper_2__TZ1_HL_markscheme.pdf (official May 2024 paper)",
+      "level": "HL (Internal and external recruitment is HL-only content, 2.4)",
+      "marks": 4,
+      "question": "Avuela PLC (AV), a public limited company, is a low-cost airline that offers cheap flights in South America. AV employs only 50 pilots, of which 20 are captains. AV's fleet of aircraft is one of the oldest in the region and several captains have resigned. AV plans to recruit pilots externally to fill the captains' vacancies. AV will hire an agency to manage the recruitment process, which will take six months. Some of AV's first officers are expressing strong interest in applying for the vacancies.\n(b) Explain one advantage and one disadvantage for AV of recruiting pilots externally. [4 marks]",
+      "markScheme": "External recruitment refers to a business seeking to fill a position with someone who does not work within the company.\nAdvantages include: more candidates to select from; finding pilot trainers (several captain pilots are resigning, so AV could find already-experienced pilots to train first officers); fresh ideas and fresher work environment given AV's conflicted labour relations; AV can concentrate on its core goals rather than a lengthy recruitment exercise.\nDisadvantages include: external recruitment could be more costly as AV will pay an agency; six months seems too long given the current conflict with the pilots' union, whereas internal recruitment (from interested first officers) will probably be faster; effects on employee morale/conflict, as the outside hire can feel like a threat to AV's pilots and the union, escalating conflict.\nMark as 2+2. Award [1] for a relevant advantage/disadvantage, with an additional [1] for application to AV. Award up to a maximum of [2]."
+    },
+    {
+      "id": "pp2_5",
+      "sourceFile": "Business_management_paper_2__TZ1_HL.pdf / Business_management_paper_2__TZ1_HL_markscheme.pdf (official May 2024 paper)",
+      "level": "HL (Equity and expectancy theory is HL-only content, 2.4)",
+      "marks": 2,
+      "question": "Airport Services (AS) is a supplier of baggage handling and general security services to six small local airports across Europe. Between February and March 2024, chief executive officer Brian Garbett carried out an employee survey; only 35% of employees responded. Selected findings: Salary – 5% happy, 20% acceptable, 75% unhappy. Support from management – 5% happy, 15% acceptable, 80% unhappy. \"Do you feel valued?\" – 4% happy, 9% acceptable, 87% unhappy.\n(c) With reference to expectancy theory and the employee survey results, explain one reason why Brian should be concerned by the results of the employee survey. [2 marks]",
+      "markScheme": "Vroom's expectancy theory states that the intensity of work effort depends on the perception that an individual's effort will result in the desired outcome. Employees are motivated when they believe their work contributes to a larger goal, they are competent at the work, and they will be rewarded for their efforts. The evidence suggests employees' expectations are not met in 4 out of 5 survey categories: staff do not feel valued, supported, or rewarded (salary), which could be contributing to poor motivation and a negative working culture.\nAward [1] for showing understanding of expectancy theory (recognition, support or reward – exact terms expectancy/instrumentality/valence not required). Award [1] for a contextual comment referring to the table, linked to expectancy theory. Award a maximum of [2]."
+    },
+    {
+      "id": "pp2_6",
+      "sourceFile": "Business_management_paper_2__TZ1_HL.pdf / Business_management_paper_2__TZ1_HL_markscheme.pdf (official May 2024 paper)",
+      "level": "HL (Industrial/employee relations is HL-only content, 2.7)",
+      "marks": 4,
+      "question": "An employee representative approached Brian (CEO of Airport Services, AS) and demanded a 15% increase in pay, highlighting that employees' living standards had fallen. Brian was hoping to agree a 6% increase, plus an extra 2% for overtime work. The employees are unhappy with the 6% offer and have threatened industrial action, including work-to-rule and strikes, targeting the upcoming summer holiday period at the airports AS serves.\n(d) Explain two disadvantages for AS of its employees implementing a work-to-rule. [4 marks]",
+      "markScheme": "Disadvantages could include:\n• It causes a slowdown or reduction in productivity; AS will still have to pay employees, so there is no financial possibility for AS to replace them as they are working according to their contracts.\n• AS will not be able to fulfil the new contracts it recently accepted at three additional airports.\n• Damaging reputation and image for AS, as work-to-rule could affect the upcoming busy summer period and impact the chances of contracts being renewed.\n• Employees will not work overtime, which could affect AS's operations.\n• Unlikely to improve the already poor relationship between management and workers.\nMark as 2+2. Award [1] for a relevant disadvantage, with an additional [1] for application to AS. Award up to a maximum of [2] per disadvantage."
+    }
+  ],
+  "3": [
+    {
+      "id": "pp3_1",
+      "sourceFile": "23nonprofitvetinaryclinicrimapurip2sectionahlonlyepq.pdf / 23nonprofitvetinaryclinicrimapurip2sectionahlonlyms.pdf",
+      "level": "SL+HL",
+      "marks": 10,
+      "question": "Non-Profit Veterinary Clinic (NPVC) is a community-based organization dedicated to providing affordable animal healthcare services. The management is considering investing in a new mobile veterinary unit. Investment details: Initial investment cost $150,000; Forecasted net cash flows – Year 1: $30,000, Year 2: $40,000, Year 3: $45,000, Year 4: $35,000, Year 5: $25,000; NPVC's discount rate: 10% (discount factors: Year1 0.9091, Year2 0.8264, Year3 0.7513, Year4 0.6830, Year5 0.6209).\n(a) Calculate the payback period for the proposed mobile veterinary unit investment. Show your working. [2]\n(b) Calculate the average rate of return (ARR) for the proposed mobile veterinary unit. [2]\n(c) Using a 10% discount rate, explain if NPVC should proceed with the proposed investment. You will find it useful to calculate the NPV of the project. [4]\n(d) Explain one disadvantage to NPVC of using net present value (NPV) as an investment appraisal method. [2]",
+      "markScheme": "(a) Payback period = 4.0 years. Award 1 mark for the correct answer; 1 mark for appropriate working.\n\n(b) Total cumulative net cash flow = $175,000; Investment cost = $150,000; Net return (profit) = $25,000, i.e. $5,000 per annum. ARR = (5,000/150,000) × 100 = 3.33%. Award 1 mark for the correct answer with the % sign; 1 mark for appropriate working.\n\n(c) Total present value of net cash flows = 27,273 + 33,056 + 33,808.5 + 23,905 + 15,522.5 = $133,565.00. NPV = 133,565 – 150,000 = –$16,435.00. As the NPV is negative, the investment should not be undertaken based on quantitative arguments. Award 1 mark for the correct answer with a $ sign; 1 mark for appropriate working; 1 mark for stating the investment should not be undertaken; 1 mark for explaining why a negative NPV leads to rejection.\n\n(d) The outcome of investment appraisal depends heavily on the choice of discount rate, which is often based on estimates or assumptions; a small change can significantly affect the outcome, potentially leading to incorrect investment decisions. Award 1 mark for explaining a correct disadvantage; 1 mark for clear and relevant application."
+    },
+    {
+      "id": "pp3_2",
+      "sourceFile": "11jukesretroarcadegamesquestions.pdf / 11jukesretroarcadegamesanswers.pdf",
+      "level": "SL+HL",
+      "marks": 6,
+      "question": "Juke's Retro Arcade Games (J-RAG) is a partnership owned by brothers Jake and Luke. The brothers are considering whether to invest in a new computerised system to improve operational efficiency. The cost of the investment is forecast to be $140,000 with an expected lifespan of five years. The partnership uses a 4% discount factor. Forecasted net cash flows: Year 1: $45,000 (discount factor 0.9615); Year 2: $50,000 (0.9246); Year 3: $55,000 (0.8890); Year 4: $45,000 (0.8548); Year 5: $40,000 (0.8219).\n(b) (i) Calculate the payback period for the new computerised system. [2 marks]\n(ii) Calculate the average rate of return on the new computerised system. [2 marks]\n(iii) Calculate the net present value on the new computerised system. [2 marks]",
+      "markScheme": "(i) By the end of Year 3, cumulative net cash flow ($150,000) exceeds the investment cost ($140,000). In Year 3: $45,000/($55,000/12) = 9.82 months. Payback period = 2 years and 10 months. Award 1 mark if correct but no working shown/incorrect answer with correct procedure; 2 marks for correct answer with working.\n\n(ii) Total NCF = $235,000; Cost = $140,000; Profit = $95,000. ARR = ($95,000/5 years)/$140,000 = $19,000/$140,000 = 13.57%. Award 1 mark if correct but no working, 2 marks for correct answer with working.\n\n(iii) Discounted cash flows total = $209,734.50. NPV = 209,734.50 – 140,000 = $69,734.50. Award 1 mark if correct but no working, 2 marks for correct answer with working."
+    },
+    {
+      "id": "pp3_3",
+      "sourceFile": "03paper2sectionamarcocampanettigemaquintanillav3.1.pdf",
+      "level": "SL+HL",
+      "marks": 10,
+      "question": "Marco Campanetti owns a pizza food truck, operating as a sole trader. He has applied for a bank loan to replace the oven and the bank manager would like to see a cash flow forecast for the next four months.\nTable 1: Opening balance on 1 January $200. Sales revenue: January $4,000, February $3,800, March $4,600, April $5,000. Cost of sales = 50% of sales revenue. Food truck monthly rent $800. Packaging per month $100. Marco's monthly salary $900. Internet and electricity costs (per month) $200. Promotional costs: January $350, February $350, March $400, April $400. Fuel costs per month $200. Tax refund paid in February $150.\n(b) Prepare a cash flow forecast for MC for the next four months. [6]\n(c) Comment on MC's cash flow position. [2]",
+      "markScheme": "(b) Cash flow forecast (all figures $): Opening balance: 200, (350), (850), (1,150). Total cash inflows: 4,000, 3,950, 4,600, 5,000. Total cash outflows: 4,550, 4,450, 4,900, 5,100. Net cash flow: (550), (500), (300), (100). Closing balance: (350), (850), (1,150), (1,250). Allow own figure rule (OFR). Award [6] if constructed accurately, neatly, in a generally accepted format, error free, with an appropriate title; fewer marks for errors per the standard IB descriptors.\n\n(c) Comments could include: net cash flow is negative for all four months, which is a huge concern for the bank manager; cash inflows are expected to improve by 25% while cash outflows increase at a slower rate (12.09%); promotional costs are high ($1,500 total) so Marco should consider streamlining below the line (BTL) promotion or using social media marketing (SMM); taking out the bank loan will incur interest charges, worsening cash flow; Marco could consider a temporary pay cut. Award [1] for recognizing the net cash flow position and trend; an additional [1] for a comment on specific entries in the forecast."
+    },
+    {
+      "id": "pp3_4",
+      "sourceFile": "Business_management_paper_2__TZ1_HL.pdf / Business_management_paper_2__TZ1_HL_markscheme.pdf (official May 2024 paper)",
+      "level": "SL+HL",
+      "marks": 8,
+      "question": "Kimura Answers PLC (KA), a public limited company, develops software and provides information technology solutions to businesses. KA has intangible assets of $24,000,000 as at 31 December 2023. Table 1 (year ending 31 December 2023, $m): Bank overdraft 24; Borrowing (long-term) 47; Cash 21; Cost of sales 42; Creditors 2; Debtors 34; Expenses 183; Interest 5; Non-current assets 68; Retained earnings 48; Sales revenue 248; Share capital 2; Tax 3.\n(a) State two types of intangible assets. [2]\n(b) (i) Calculate KA's profit before interest and tax for the year ended 31 December 2023 (show all your working). [2]\n(ii) Using your answer to (b)(i), calculate KA's profit margin for the year ended 31 December 2023 (show all your working). [2]\n(d) In 2024, KA will purchase 20 company cars for $50,000 each, with a residual value of $5,000, depreciated over five years using straight-line depreciation. Explain one disadvantage for KA of using a straight-line depreciation method for the 20 company cars. [2]",
+      "markScheme": "(a) Types of intangible assets include: copyrights, goodwill, licenses, patents, software, brand value/public image, internet domain names, trademarks/logos/brand names, franchises, broadcasting rights, lists of regular and reliable customers. Award [1] for each type stated, up to a maximum of [2].\n\n(b)(i) $248,000,000 – $42,000,000 – $183,000,000 = profit before interest and tax = $23,000,000. Award [1] for working, [1] for the correct answer with $ sign.\n(ii) Profit margin = $23,000,000/$248,000,000 = 9.27%. Award [1] for working, [1] for the correct answer with % sign.\n\n(d) A straight-line depreciation (SLD) method is less accurate than other depreciation methods based on production efficiency, such as units of production. SLD does not account for the loss of efficiency or the increase in repair expenses over the years and is therefore not as suitable for costly assets such as cars, which tend to experience accelerated obsolescence in the first years. Award [1] for a generic disadvantage of a straight-line depreciation method, and an additional [1] for explanation and application to KA."
+    },
+    {
+      "id": "pp3_5",
+      "sourceFile": "05thefemalecompany.pdf",
+      "level": "SL+HL",
+      "marks": 6,
+      "question": "The Female Company (TFC) is a female healthcare product business... It is a privately held company based in Berlin, Germany.\n(a) Define the term privately held company. [2 marks]\n\nAs a start-up company in 2018, TFC relied on both internal and external sources of finance. The company received financial backing from numerous business angels. TFC also managed to secure €42,200 in crowdfunding.\n(b) In the context of the case study, distinguish between business angels and crowdfunding. [4 marks]",
+      "markScheme": "(a) A privately held company is a business organization that is owned and operated by private investors or shareholders without its shares being openly traded on a Stock Exchange. The owners (shareholders) have full control of the organization's operations. Award [1 mark] for a definition that shows some understanding; [2 marks] for a definition that shows a clear and accurate understanding.\n\n(b) Business angels are wealthy individual investors who provide capital to support start-up companies in exchange for equity or debt; they usually have prior industry experience so often also provide business advice. In contrast, crowdfunding is a form of finance where a large number of people make small contributions to fund a project or business venture, usually through an online platform; contributors do not typically take ownership and often receive rewards in the form of free or discounted products or services instead. Award [1–2 marks] for an answer that shows some generic knowledge; [3–4 marks] for an answer that fully and clearly distinguishes between the two, with reference to the case study."
+    },
+    {
+      "id": "pp3_6",
+      "sourceFile": "04paper2sectionbprotimunchgemaquintanilla.pdf",
+      "level": "SL+HL",
+      "marks": 4,
+      "question": "PM's product portfolio includes protein bars, protein biscuits, and protein shakes. Table 1 (forecasted financial data, in $): Protein bar – selling price $2.50, unit variable cost $1.50, quantity 250,000. Protein biscuits – selling price $1.50, unit variable cost $1.00, quantity 180,000. Protein shakes – selling price $3.00, unit variable cost $2.25, quantity 120,000. Total fixed costs $200,000.\n(c) (i) Calculate the forecasted unit contribution for the three products. [2]\n(ii) Calculate the forecasted total Return for PM (show working). [2]",
+      "markScheme": "(i) Unit contribution = Selling price – Unit variable cost. Protein bar = $1.00; Protein biscuit = $0.50; Protein shake = $0.75. Award [1] for one or two correct answers; [2] for three correct answers.\n\n(ii) Total contribution = ($1 × 250,000) + ($0.50 × 180,000) + ($0.75 × 120,000) = $430,000. Total Return = Total contribution – Total fixed costs = $430,000 – $200,000 = $230,000. Award [1] if the candidate demonstrates the method but makes a mathematical error; [2] for the correct answer with working shown."
+    }
+  ],
+  "4": [
+    {
+      "id": "pp4_1",
+      "sourceFile": "24fitlifeproteinbarsshwetachiplunkarepq.pdf",
+      "level": "SL+HL",
+      "marks": 10,
+      "question": "FitLife Protein Bars (FPB) sells a range of protein bars in the United States health food market (expected to grow 8–10% annually). FPB's main competitors are Quest Nutrition, Clif Bar, and Rio BAR, which price their protein bars between $10 and $30 per box; FPB's own prices are higher than most competitors'.\n(a) Define the term brand. [2 marks]\n(b) Explain two reasons why FPB uses market segmentation. [4 marks]\n(c) Explain one advantage and one disadvantage for FPB of using quota sampling. [4 marks]",
+      "markScheme": "(a) A brand is a name, symbol, design, or identity that distinguishes a product or business from its competitors and helps create customer recognition and loyalty. Award [1] for a basic definition; [2] for a full definition.\n\n(b) Targeted marketing – tailoring products/promotions to specific groups (e.g. athletes, health-conscious individuals); Product development – identifying distinct needs (e.g. vegan or children-friendly options); Competitive advantage – standing out by focusing on niche groups competitors overlook; Efficient resource allocation – directing marketing budget/R&D more effectively. Mark as 2+2: award [1] for a valid reason and [1] for a clear explanation in context, up to [4].\n\n(c) Advantages of quota sampling: targeted consumer insights; cost-effective compared to random sampling; quicker results. Disadvantages: sampling bias (results may not be representative); non-random selection (unequal chance of selection); interviewer bias. Mark as 2+2: award [1] for a clear explanation and [1] for appropriate application to the case study, up to [4]."
+    },
+    {
+      "id": "pp4_2",
+      "sourceFile": "17thetaylorswifteffectkentishdelights.pdf",
+      "level": "SL+HL",
+      "marks": 6,
+      "question": "In June 2024, Taylor Swift visited her favourite London takeaway, Kentish Delight in Camden, ordering 45 large chicken doner kebabs. Her fans (\"Swifties\") shared social media posts about the visits on YouTube, Instagram, and TikTok. Kentish Delight proudly displays Swift-related memorabilia and uses social media marketing (SMM) to promote its kebab food products.\n(a) Define the term social media marketing (SMM). [2 marks]\n(b) Describe one benefit of market segmentation for Kentish Delight. [2 marks]\n(c) Describe one benefit of brand loyalty for Kentish Delight. [2 marks]",
+      "markScheme": "(a) Social media marketing (SMM) refers to the use of social media platforms and websites to promote a good, service, or brand, involving online marketing activities and paid social media advertising. Award [1] for partial understanding; [2] for a good definition.\n\n(b) Market segmentation allows Kentish Delight to tailor marketing efforts to specific groups (e.g. Swifties), creating targeted promotions and content, increasing engagement and conversion; it enables customized menu options for higher satisfaction and loyalty; it lets a small business allocate its marketing budget more effectively by concentrating on high-potential segments. Award [1] for a valid benefit, [1] for accurate description in context.\n\n(c) Taylor Swift's patronage can increase brand loyalty among her fans, associating the brand with her positive image; loyal customers provide a regular stream of income and reduce the need for continual marketing; loyal customers become brand advocates, generating cost-effective word-of-mouth marketing; maintaining loyal customers is generally less expensive than acquiring new ones. Award [1] for a valid benefit, [1] for accurate description in context."
+    },
+    {
+      "id": "pp4_3",
+      "sourceFile": "bmt10portersgenericstrategiesmcdonaldscosmcsepq.pdf",
+      "level": "HL (Porter's generic strategies is HL-only)",
+      "marks": 10,
+      "question": "In late 2023, McDonald's announced a strategic move into the coffee market with its new cafe concept – CosMc's, offering customizable coffee drinks. While McDonald's core brand emphasizes cost leadership with its traditional menu, CosMc's differentiates itself through a unique atmosphere and specialty drinks targeting younger customers.\n(a) Define the term cost leadership. [2 marks]\n(b) Outline one reason why differentiation can give McDonald's a competitive advantage. [2 marks]\n(c) Apply the model of Porter's generic strategies to McDonald's launch of CosMc's. [6 marks]",
+      "markScheme": "(a) Cost leadership is one of Porter's generic strategies that concentrates on establishing a competitive advantage by achieving the lowest costs in the market for a particular good or service. Award [1] for some understanding; [2] for a clear, accurate definition.\n\n(b) Differentiation helps create a unique, recognizable brand image; it helps attract and retain customers by offering something competitors do not replicate easily; it builds customer loyalty; differentiated products often command premium pricing. Award [1] for a valid reason clearly outlined, [1] for appropriate application.\n\n(c) Cost leadership – McDonald's core menu uses standardized, affordable products. Differentiation – evolving menu items and CosMc's demonstrate more unique products/experiences. Focus – McCafe and CosMc's represent focused strategies targeting the coffee market segment specifically, versus the core brand's mass-market appeal. Award [1–2] for limited understanding; [3–4] for reference to at least two components; [5–6] for reference to all three components with clear, appropriate terminology and application throughout."
+    },
+    {
+      "id": "pp4_4",
+      "sourceFile": "Business_management_paper_2__TZ1_HL.pdf / Business_management_paper_2__TZ1_HL_markscheme.pdf (official May 2024 paper)",
+      "level": "HL (Price elasticity of demand is HL-only)",
+      "marks": 2,
+      "question": "Sengku Vacuum Cleaners (SVC) manufactures vacuum cleaners and has a patent on one component that makes an SVC vacuum cleaner more powerful than competitors' comparably priced vacuum cleaners. Despite the greater power of SVC vacuum cleaners, the price elasticity of demand is –2.\nReferring to price elasticity of demand, explain one impact on SVC's sales revenue if it increases the selling price of each vacuum cleaner by 20%. [2 marks]",
+      "markScheme": "Award [1] if the candidate writes that a price elasticity of –2 is price elastic, or that the percentage change in quantity demanded exceeds the percentage change in price. Award an additional [1] if the candidate states that demand will fall by 40% so total revenue should fall. Award up to a maximum of [2]. If the candidate merely states that total revenue will fall with no explanation, award [0]."
+    },
+    {
+      "id": "pp4_5",
+      "sourceFile": "Business_management_paper_2__TZ1_HL.pdf / Business_management_paper_2__TZ1_HL_markscheme.pdf (official May 2024 paper)",
+      "level": "SL+HL",
+      "marks": 2,
+      "question": "Avuela PLC (AV), a public limited company, is a low-cost airline that offers cheap flights in South America. AV operates all over the continent flying to small cities and remote areas. Its target market is travellers who like difficult-to-reach destinations.\n(a) Define the term target market. [2 marks]",
+      "markScheme": "A target market is a specific group of people with shared characteristics that a business wants to sell its products or services to. Award [1] for partial understanding (reference to a group of people with shared characteristics/needs/wants). Award a maximum of [2] if the candidate also references the fact that it's a group the business aims to sell its products or services to. Do not reward candidates who use \"target its products and services\" (tautology). Do not reward \"market segment\" in isolation."
+    },
+    {
+      "id": "pp4_6",
+      "sourceFile": "10paper2sectionbsamsung.pdf",
+      "level": "SL+HL",
+      "marks": 8,
+      "question": "Samsung is a large multinational company, the world's largest producer of smartphones (53.5 million units shipped in Q2 2023, vs Apple's 45.3 million). As the market leader, Samsung has been leading the way in sustainable development, introducing environmentally friendly products such as solar-powered computers and energy efficient home appliances, and setting up Samsung Recycle.\n(a)(i) Define the term multinational company. [2]\n(a)(ii) Define the term market leader. [2]\n(b) Describe what it means to be a sustainable business. [2]\n(c) Explain two reasons why Samsung might choose to operate in a sustainable way, despite the costs of doing so. [4]",
+      "markScheme": "(a)(i) A multinational company (MNC) is any business organization that has operations in overseas markets, i.e., operates in two or more countries. Award [1] for some understanding; [2] for a clear understanding.\n(a)(ii) A market leader is the firm with the greatest market share in a market or industry. Award [1] for some understanding; [2] for a clear understanding.\n\n(b) A sustainable business is an organization, like Samsung, that can thrive and grow (via profits) whilst being ethical to the needs of society and environmentally friendly, ensuring economic, social, and ecological sustainability. Award [1] for some understanding; [2] for a good understanding referring to ecological, social, and economic sustainability.\n\n(c) It is the ethical/morally correct thing to do; it can help enhance corporate image in a highly competitive industry; it can improve employee morale and satisfy other key stakeholders; operations that minimize waste and pollution are beneficial to profitability in the long run (avoiding higher environmental costs). Mark as 2+2: award [1 mark] for a valid reason and a further [1 mark] for a clear explanation, written in context."
+    }
+  ],
+  "5": [
+    {
+      "id": "pp5_1",
+      "sourceFile": "16brisbanegeneralbuilderscpaquestions.pdf / 16brisbanegeneralbuilderscpaanswers.pdf",
+      "level": "HL (Critical path analysis is an HL-only toolkit item)",
+      "marks": 10,
+      "question": "Brisbane General Builders (BGB) is a small construction company that has accepted a contract to install a play frame with a soft play area for young children in a local leisure centre. The operations manager has produced the following schedule:\nActivity A: 5 days, no predecessor. Activity B: 10 days, no predecessor. Activity C: 3 days, preceded by A. Activity D: 6 days, preceded by A. Activity E: 5 days, preceded by B and C. Activity F: 7 days, preceded by D and E. Activity G: 8 days, preceded by E. Activity H: 10 days, preceded by F and G.\n(a) Identify two likely direct costs that Brisbane General Builders (BGB) incurs. [2 marks]\n(b) Define the term outsource. [2 marks]\n(c) Construct the network diagram for BGB and identify the critical path. [4 marks]\n(d) Calculate the total float on activities C and F. [2 marks]",
+      "markScheme": "(a) Direct costs might include: wages for part-time staff; construction materials; transportation costs (for the play frame from Canada). Award [1 mark] per relevant direct cost, up to [2 marks].\n\n(b) Outsource refers to the practice of subcontracting non-core activities to external firms or agencies as a method of reducing costs and improving efficiency. Award [1 mark] for some understanding; [2 marks] if clearly defined.\n\n(c) The critical path is: B, E, G, and H. Award [1–2 marks] for a network diagram showing some understanding but containing two or more errors (apply OFR). Award up to [3 marks] for a network diagram with up to 1 error. A maximum of [4 marks] can only be awarded if the correct critical path is clearly identified.\n\n(d) Total float = LFT – Duration – EST. Activity C = 10 – 3 – 5 = 2 days. Activity F = 23 – 7 – 15 = 1 day. This shows activities C and F can be delayed by up to 2 days and 1 day respectively without delaying the overall project. Award [1 mark] for correct answers only; [2 marks] if working and correct answers are both provided."
+    },
+    {
+      "id": "pp5_2",
+      "sourceFile": "22jimmyjerrybakerspaper2sectionbniveniveditabanerjeeepq.pdf / 22jimmyjerrybakerspaper2sectionbniveniveditabanerjeems.pdf",
+      "level": "SL+HL (optimal stock level reasoning, part (c), is HL-only content, 5.6)",
+      "marks": 8,
+      "question": "Jimmy & Jerry Bakers (J&JB) has a centralized baking facility that supplies cakes to all its 11 branches daily. J&JB imports fresh tropical fruits weekly, maximizing warehouse efficiency and maintains optimal stock levels for the production process. Demand is highest during the summer months. Table 1: Selling Price $45; Variable Costs $15 per cake; Fixed Costs $21,000 per month.\n(b) Using the information in Table 1, calculate the break-even quantity (number of cakes) for J&JB (show all your working). [2]\n(c) Explain two reasons why an optimal level of stock is important to J&JB. [4]\n\nJ&JB plans to invest in AI-powered food printers for high-speed pastry printing for mass customization.\n(d) Explain one advantage of mass customization. [2]",
+      "markScheme": "(b) Break-even quantity = Fixed costs/Contribution. Contribution per cake = $45 – $15 = $30. Break-even quantity = $21,000/$30 = 700 cakes. Award [1] if the method is shown but with a mathematical error; [2] for the correct answer expressed in cakes/units.\n\n(c) Customer satisfaction – optimal stock of fresh (FMCG) tropical fruit ensures cake freshness and quality; Cost efficiency – minimizes inventory holding costs (storage, insurance) while mitigating risks from late deliveries or demand spikes; Operational efficiency – minimizes disruptions to output and reduces lead times; Changing seasonal demand – must account for seasonal peaks (e.g. summer) in demand for tropical fruit cakes. Mark as 2+2: award [1] for identifying a valid reason and [1] for explanation in context, up to [2] per reason.\n\n(d) Customers can customize their cakes with greater choice, enhancing satisfaction and loyalty; mass customization uses a flexible manufacturing system to mass produce while meeting individual consumer needs, achieving economies of scale; it helps create a strong unique selling point (USP), differentiating J&JB from competitors; it can allow J&JB to charge a premium price. Award [1] for explaining a relevant advantage, with an additional [1] for appropriate application to J&JB."
+    },
+    {
+      "id": "pp5_3",
+      "sourceFile": "Business_management_paper_2__TZ1_HL.pdf / Business_management_paper_2__TZ1_HL_markscheme.pdf (official May 2024 paper)",
+      "level": "SL+HL",
+      "marks": 2,
+      "question": "Novus Orbis PLC (NOP), a public limited company, manufactures virtual reality headsets using a flow production method. NOP buys components in bulk to produce the headsets.\n(a) State one advantage and one disadvantage of flow production. [2]",
+      "markScheme": "Advantages include: economies of scale as unit costs fall with larger quantities produced; automation saves time and reduces costs; it is relatively easier to increase output when demand rises than with other systems.\nDisadvantages include: little or no flexibility due to standardization and high production levels of identical products; an efficient stock control system is required to avoid expensive stockpiling; high startup costs in machinery (capital intensive); if a problem arises anywhere along the assembly line, all production can come to a halt; can demotivate workers as tasks are monotonous.\nNo application of context is required. Award [1] for a relevant advantage/disadvantage stated, up to a maximum of [2]."
+    },
+    {
+      "id": "pp5_4",
+      "sourceFile": "Business_management_paper_2__TZ1_HL.pdf / Business_management_paper_2__TZ1_HL_markscheme.pdf (official May 2024 paper)",
+      "level": "HL (Just-in-time/lean production is HL-only content, 5.3)",
+      "marks": 2,
+      "question": "NOP's factory is in the capital city of a developing country, where rent for storage space is very expensive, public transport is limited, and traffic congestion is significant. Seeking greater efficiency, NOP's board of directors is considering introducing just-in-time (JIT) production. NOP's chief executive officer (CEO) is concerned about the country's political and economic instability.\n(d) Explain one disadvantage for NOP of implementing just-in-time (JIT) production. [2]",
+      "markScheme": "Possible disadvantages include: JIT requires reliable suppliers, and the lack of infrastructure (limited public transport, traffic congestion in the capital city) may affect the provision of regular supplies; NOP may find it difficult to respond to unexpected changes in demand (given the country's political/economic instability) if it implements JIT; NOP may not enjoy economies of scale due to the small order size. Award [1] for a relevant disadvantage, with an additional [1] for application to NOP. Award up to a maximum of [2]."
+    },
+    {
+      "id": "pp5_5",
+      "sourceFile": "Business_management_paper_2__TZ1_HL.pdf / Business_management_paper_2__TZ1_HL_markscheme.pdf (official May 2024 paper)",
+      "level": "SL+HL",
+      "marks": 6,
+      "question": "Sengku Vacuum Cleaners (SVC) manufactures vacuum cleaners and sells them to wholesalers. For 2025, SVC forecasts sales of 2,500 vacuum cleaners per month at an average price of $50. Table 3 – forecasted fixed costs for 2025: Rent $144,000; Insurance $27,000; Salaries $273,000; Lease on equipment $196,000; Cleaning services $60,000. Table 4 – forecasted variable costs per vacuum cleaner: Material $17.50; Labour $2.50; Delivery $5.00.\n(b)(i) Calculate SVC's break-even level of output for 2025 (show all your working). [2]\n(ii) Calculate the number of vacuum cleaners SVC needs to sell at a price of $50 to make a target profit of $25,000 (show all your working). [2]\n(iii) Calculate SVC's break-even quantity if it increases its selling price by 20% (show all your working). [2]",
+      "markScheme": "(i) Fixed costs = $144,000+$27,000+$273,000+$196,000+$60,000 = $700,000. Contribution per unit = $50 – ($17.5+$2.5+$5) = $25. Break-even quantity = $700,000/$25 = 28,000 units. Award [1] for working/correct-method-with-error, [2] for the correct answer with unit shown.\n\n(ii) Target profit output = (Fixed costs + Target profit)/Contribution per unit = (700,000+25,000)/25 = 29,000 units. Award [1]/[2] as above.\n\n(iii) New price = $50 × 1.2 = $60. New contribution = $60 – $25 = $35. New break-even quantity = $700,000/$35 = 20,000 units. Award [1]/[2] as above."
+    }
+  ]
+};
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+
+let state = {
+  view: 'home',       // 'home' | 'unit'
+  unitId: null,
+  tab: 'mistakes',    // 'mistakes' | 'questions'
+  answers: {},        // qid → {text, submitted, score, showModel}
+  openMistakes: {},   // unitId_idx → bool
+};
+
+function getUnit(id) { return UNITS.find(u => u.id === id); }
+function getProgress(unitId) {
+  const qs = QUESTIONS[unitId] || [];
+  const done = qs.filter(q => state.answers[q.id]?.submitted).length;
+  return { done, total: qs.length };
+}
+
+// ─── SCORING ──────────────────────────────────────────────────────────────────
+
+// Numbers only, unit stripped off. Handles $ signs, thousands commas, percent
+// signs and the unicode minus sign some model answers use, so "300,000",
+// "300000" and "−3" all normalize the same way.
+function normalizeNum(str) {
+  return String(str).replace(/−/g, '-').replace(/\$/g, '').replace(/,/g, '').replace(/%/g, '').trim();
+}
+
+// A numeric keyword can carry a required unit, using a simple convention in
+// the data itself: "$11,000" (a leading $) requires a dollar figure,
+// "60%" / "60 %" (a trailing %) requires a percent sign, and "6,000 units"
+// (a trailing word) requires that word. A bare "20,000" has no unit
+// requirement. Returns null if the keyword isn't numeric at all.
+function parseNumericKeyword(kw) {
+  const raw = String(kw).trim();
+  let m = raw.match(/^\$\s*(-?[\d,]+(?:\.\d+)?)$/);
+  if (m) return { value: Number(normalizeNum(m[1])), unit: '$' };
+  m = raw.match(/^(-?[\d,]+(?:\.\d+)?)\s*%$/);
+  if (m) return { value: Number(normalizeNum(m[1])), unit: '%' };
+  m = raw.match(/^(-?[\d,]+(?:\.\d+)?)\s+([a-zA-Z]+)$/);
+  if (m) return { value: Number(normalizeNum(m[1])), unit: m[2].toLowerCase() };
+  const n = normalizeNum(raw);
+  if (n !== '' && /^-?\d+(\.\d+)?$/.test(n)) return { value: Number(n), unit: null };
+  return null;
+}
+
+// Pulls every number out of the student's answer, tagging each with whatever
+// unit immediately surrounds it ($ before, % or a word straight after), so
+// "6,000 units" and "$6,000" are told apart, not just matched as "6000".
+function extractUserNumberTokens(text) {
+  const cleaned = String(text).replace(/−/g, '-');
+  const tokens = [];
+  const re = /(\$\s*)?(-?[\d,]+(?:\.\d+)?)(\s*%)?/g;
+  let m;
+  while ((m = re.exec(cleaned)) !== null) {
+    const numStr = m[2];
+    if (!numStr || !/\d/.test(numStr)) continue;
+    const value = Number(numStr.replace(/,/g, ''));
+    if (isNaN(value)) continue;
+    let trailingWord = null;
+    if (!m[3]) {
+      const after = cleaned.slice(re.lastIndex, re.lastIndex + 15);
+      const wm = after.match(/^\s*([a-zA-Z]+)/);
+      if (wm) trailingWord = wm[1].toLowerCase();
+    }
+    tokens.push({ value, hasDollarPrefix: !!m[1], hasPercentSuffix: !!m[3], trailingWord });
+  }
+  return tokens;
+}
+
+// Scores a single required figure against the student's numbers:
+//   1   = right number, right (or no) unit required
+//   0.5 = right number, but no unit given at all (ambiguous/omitted)
+//   0   = number missing entirely, OR present with the WRONG unit attached
+//         (e.g. a dollar sign on what should be a unit count) — a real
+//         conceptual mix-up, not just a formatting slip, so it earns nothing.
+// A clean x1000 relationship also counts (a student who shows working in
+// thousands, consistent with the question's figures, isn't penalised), and
+// matching is on magnitude only — a deficit written as -35000 or as (35,000)
+// is the same figure; sign/F-A labelling, where it matters, is its own
+// separate textual keyword.
+function targetScore(tokens, target) {
+  const absTarget = Math.abs(target.value);
+  const matches = tokens.filter(t => {
+    const absN = Math.abs(t.value);
+    return Math.abs(absN - absTarget) < 0.01 ||
+      (absTarget >= 100 && Math.abs(absN - absTarget / 1000) < 0.01) ||
+      (absN >= 100000 && Math.abs(absTarget - absN / 1000) < 0.01);
+  });
+  if (!matches.length) return 0;
+  if (!target.unit) return 1;
+  let sawCorrectUnit = false, sawWrongUnit = false;
+  matches.forEach(t => {
+    const hasThisUnit = target.unit === '%' ? t.hasPercentSuffix
+      : target.unit === '$' ? t.hasDollarPrefix
+      : (!!t.trailingWord && t.trailingWord.replace(/s$/, '') === target.unit.replace(/s$/, ''));
+    if (hasThisUnit) { sawCorrectUnit = true; return; }
+    if (t.hasDollarPrefix || t.hasPercentSuffix || t.trailingWord) sawWrongUnit = true;
+  });
+  if (sawCorrectUnit) return 1;
+  if (sawWrongUnit) return 0;
+  return 0.5;
+}
+
+function scoreAnswer(text, q) {
+  if (q.type === 'essay') return null;
+  const lower = text.toLowerCase();
+  const max = q.marks;
+  const allKw = q.keywords || [];
+  const numericKw = allKw.filter(kw => !!parseNumericKeyword(kw));
+  const textualKw = allKw.filter(kw => !parseNumericKeyword(kw));
+
+  if (numericKw.length) {
+    // Calculation question. Match the required figure(s) as numbers, not as
+    // literal substrings, so formatting (commas, thousands shorthand, sign
+    // vs brackets) never costs marks for a mathematically correct answer —
+    // but the unit is checked deliberately, since a right number with the
+    // wrong or missing unit (60 instead of 60%, $6,000 instead of 6,000
+    // units for a break-even quantity) is a real mark lost, not a formatting
+    // nitpick.
+    const tokens = extractUserNumberTokens(text);
+    const targets = [];
+    numericKw.forEach(kw => {
+      const p = parseNumericKeyword(kw);
+      if (p && !targets.some(t => t.unit === p.unit && Math.abs(t.value - p.value) < 0.01)) targets.push(p);
+    });
+    const scores = targets.map(t => targetScore(tokens, t));
+    const numSum = scores.reduce((a, b) => a + b, 0);
+    const numFraction = targets.length ? numSum / targets.length : 0;
+    const numFull = targets.length > 0 && scores.every(s => s === 1);
+
+    // Short, single-figure calculation questions (up to 2 marks): nobody
+    // realistically types out formula vocabulary for a 2-mark arithmetic
+    // item, so the score rests on the number(s) and their units alone.
+    // floor (not round) so a missing unit never quietly rounds back up to
+    // full marks.
+    if (max <= 2) {
+      if (!targets.length) return 0;
+      return Math.floor(max * numFraction + 1e-9);
+    }
+
+    // Longer / multi-part calculation questions: numeric accuracy (incl.
+    // units) still carries most of the weight, but written explanation
+    // genuinely matters for the marks that require it.
+    const textHits = textualKw.filter(kw => lower.includes(kw.toLowerCase())).length;
+    const textFraction = textualKw.length ? textHits / textualKw.length : null;
+    if (numFull && (textFraction === null || textFraction >= 0.34)) return max;
+
+    const blended = textFraction === null ? numFraction : (0.7 * numFraction + 0.3 * textFraction);
+    let score = Math.floor(max * blended + 1e-9);
+    if (score === 0 && text.trim().length > 30) score = Math.min(1, max);
+    return Math.max(0, Math.min(max, score));
+  }
+
+  const hits = allKw.filter(kw => lower.includes(kw.toLowerCase()));
+  const ratio = hits.length / Math.max(allKw.length, 1);
+  if (ratio >= 0.7) return max;
+  if (ratio >= 0.45) return Math.max(1, Math.ceil(max * 0.6));
+  if (ratio >= 0.2) return Math.max(1, Math.ceil(max * 0.35));
+  if (text.trim().length > 30) return 1;
+  return 0;
+}
+
+function scoreColor(score, max) {
+  if (score >= max) return '#52b788';
+  if (score >= max * 0.6) return '#ff9f1c';
+  return '#ff6b6b';
+}
+
+function scoreLabel(score, max) {
+  if (score >= max) return 'Full marks, excellent!';
+  if (score >= max * 0.7) return 'Good attempt, check model answer for fine tuning';
+  if (score >= max * 0.4) return 'Partial credit, review key terms missed';
+  return 'Below threshold, study model answer carefully';
+}
+
+// ─── RENDER ───────────────────────────────────────────────────────────────────
+
+function render() {
+  const main = document.getElementById('main');
+  const header = document.getElementById('app-header');
+  const backBtn = document.getElementById('back-btn');
+  const title = document.getElementById('header-title');
+  const sub = document.getElementById('header-sub');
+  const badges = document.getElementById('header-badges');
+
+  if (state.view === 'home') {
+    backBtn.style.display = 'none';
+    title.style.fontSize = '26px';
+    title.style.color = '#fff';
+    title.textContent = 'IB Business Management';
+    sub.textContent = '2024 Syllabus · Interactive Revision · SL & HL';
+    badges.style.display = 'flex';
+    backBtn.onclick = null;
+    main.innerHTML = renderHome();
+    bindHome();
+  } else {
+    const unit = getUnit(state.unitId);
+    backBtn.style.display = 'flex';
+    backBtn.style.color = unit.accent;
+    title.style.fontSize = '20px';
+    title.style.color = unit.accent;
+    title.textContent = unit.title + ': ' + unit.subtitle;
+    sub.textContent = '';
+    badges.style.display = 'none';
+    backBtn.onclick = () => { state.view = 'home'; state.unitId = null; render(); };
+    main.innerHTML = renderUnit(unit);
+    bindUnit(unit);
+  }
+}
+
+// ─── HOME ─────────────────────────────────────────────────────────────────────
+
+function renderHome() {
+  const cards = UNITS.map(u => {
+    const p = getProgress(u.id);
+    const pct = p.total > 0 ? Math.round((p.done / p.total) * 100) : 0;
+    return `<button class="unit-card" data-unit="${u.id}"
+      style="background:linear-gradient(135deg,${u.color}ee,${u.color}99);border-color:${u.accent}44"
+      onmouseover="this.style.boxShadow='0 12px 40px ${u.accent}33'"
+      onmouseout="this.style.boxShadow='none'">
+      <div class="unit-pct" style="color:${u.accent}">${pct}% done</div>
+      <div class="unit-progress-bar-bg"><div class="unit-progress-bar" style="width:${pct}%;background:${u.accent}"></div></div>
+      <div class="unit-label" style="color:${u.accent}">${u.title}</div>
+      <div class="unit-subtitle">${u.subtitle}</div>
+    </button>`;
+  }).join('');
+
+  return `
+    <div class="intro-text">Select a unit to review common exam mistakes, attempt auto-marked retrieval questions and teacher-marked 10-mark essays, and practise real past-paper questions with official mark schemes.</div>
+    <div id="unit-grid">${cards}</div>
+    <div id="legend">
+      <h3>How to use this revision tool</h3>
+      <div id="legend-grid">
+        <div class="legend-item"><span class="legend-icon">⚠</span><div><div class="legend-label">Common Mistakes</div><div class="legend-desc">Real examiner errors with corrections</div></div></div>
+        <div class="legend-item"><span class="legend-icon">✍</span><div><div class="legend-label">Practice Questions</div><div class="legend-desc">Retrieval up to 6 marks, auto-scored on key concept coverage</div></div></div>
+        <div class="legend-item"><span class="legend-icon">🖊</span><div><div class="legend-label">10-Mark Essays</div><div class="legend-desc">Submit for teacher review with full marking guidance</div></div></div>
+        <div class="legend-item"><span class="legend-icon">📄</span><div><div class="legend-label">Past Papers</div><div class="legend-desc">Real IB exam and practice questions, official mark schemes</div></div></div>
+        <div class="legend-item"><span class="legend-icon">📋</span><div><div class="legend-label">Model Answers</div><div class="legend-desc">Full marking guidance revealed after submission</div></div></div>
+      </div>
+    </div>`;
+}
+
+function bindHome() {
+  document.querySelectorAll('.unit-card').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.unitId = parseInt(btn.dataset.unit);
+      state.view = 'unit';
+      state.tab = 'mistakes';
+      render();
+    });
+  });
+}
+
+// ─── UNIT ─────────────────────────────────────────────────────────────────────
+
+function renderUnit(unit) {
+  const tab = state.tab;
+  const qs = QUESTIONS[unit.id];
+  const nonEssay = qs.filter(q => q.type !== 'essay').length;
+  const ppCount = (PASTPAPERS[unit.id] || []).length;
+  const tabBtn = (key, icon, label) => `
+      <button class="tab-btn ${tab === key ? 'active' : ''}" id="tab-${key}"
+        style="${tab === key ? 'background:' + unit.accent : ''}">
+        ${icon} ${label}
+      </button>`;
+  return `
+    <div id="tab-bar">
+      ${tabBtn('mistakes', '⚠', `Common Mistakes (${MISTAKES[unit.id].length})`)}
+      ${tabBtn('questions', '✍', `Questions (${nonEssay} + 1 essay)`)}
+      ${tabBtn('pastpapers', '📄', `Past Papers (${ppCount})`)}
+    </div>
+    <div id="tab-content">
+      ${tab === 'mistakes' ? renderMistakes(unit) : tab === 'questions' ? renderQuestions(unit) : renderPastPapers(unit)}
+    </div>`;
+}
+
+function bindUnit(unit) {
+  document.getElementById('tab-mistakes').addEventListener('click', () => { state.tab = 'mistakes'; render(); });
+  document.getElementById('tab-questions').addEventListener('click', () => { state.tab = 'questions'; render(); });
+  document.getElementById('tab-pastpapers').addEventListener('click', () => { state.tab = 'pastpapers'; render(); });
+  if (state.tab === 'mistakes') bindMistakes(unit);
+  else if (state.tab === 'questions') bindQuestions(unit);
+  else bindPastPapers(unit);
+}
+
+// ─── MISTAKES ─────────────────────────────────────────────────────────────────
+
+function renderMistakes(unit) {
+  const items = MISTAKES[unit.id];
+  const cards = items.map((m, i) => {
+    const key = unit.id + '_' + i;
+    const open = !!state.openMistakes[key];
+    return `
+      <div class="mistake-card" style="border-color:${unit.accent}33" id="mc-${key}">
+        <button class="mistake-header" data-key="${key}"
+          style="background:${open ? unit.accent + '18' : '#ffffff08'}">
+          <span class="mistake-title" style="color:${open ? unit.accent : '#e0e0e0'}">⚠ ${m.title}</span>
+          <span class="mistake-arrow" style="color:${unit.accent};transform:rotate(${open ? 90 : 0}deg)">›</span>
+        </button>
+        ${open ? `<div class="mistake-body">
+          <div class="mistake-error">
+            <div class="mistake-tag" style="color:#ff9999">Common Mistake</div>
+            <div class="mistake-text" style="color:#ffcccc">${m.mistake}</div>
+          </div>
+          <div class="mistake-fix">
+            <div class="mistake-tag" style="color:#88ff99">Examiner's Fix</div>
+            <div class="mistake-text" style="color:#ccffdd">${m.fix}</div>
+          </div>
+        </div>` : ''}
+      </div>`;
+  }).join('');
+  return `<div class="intro-text">Click each mistake to reveal the examiner's correction.</div>${cards}`;
+}
+
+function bindMistakes(unit) {
+  document.querySelectorAll('.mistake-header').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const key = btn.dataset.key;
+      state.openMistakes[key] = !state.openMistakes[key];
+      render();
+    });
+  });
+}
+
+// ─── QUESTIONS ────────────────────────────────────────────────────────────────
+
+function renderQuestions(unit) {
+  const qs = QUESTIONS[unit.id];
+  const slHl = qs.filter(q => q.level === 'SL+HL' && q.type !== 'essay');
+  const hlOnly = qs.filter(q => q.level === 'HL' && q.type !== 'essay');
+  const essay = qs.filter(q => q.type === 'essay');
+
+  return `
+    <div class="intro-text">Questions are scored automatically based on key concept coverage (indicative only). Model answers and marking guidance appear after submission. For the 10 mark essay, use the box to plan your response, then write out the full essay by hand and give it to your teacher for marking. Nothing here is sent to your teacher automatically.</div>
+    <div class="section-label sl">SL + HL Questions</div>
+    ${slHl.map(q => renderQuestion(q, unit.accent)).join('')}
+    ${hlOnly.length ? `<div class="section-label hl">HL Extension Questions</div>${hlOnly.map(q => renderQuestion(q, unit.accent)).join('')}` : ''}
+    <div class="section-label essay">Extended Response, Marked by Your Teacher</div>
+    ${essay.map(q => renderQuestion(q, unit.accent)).join('')}`;
+}
+
+function renderQuestion(q, accent) {
+  const a = state.answers[q.id] || {};
+  const isEssay = q.type === 'essay';
+  const levelBg = q.level === 'HL' ? '#ff6b6b22' : '#52b78822';
+  const levelColor = q.level === 'HL' ? '#ff6b6b' : '#52b788';
+  const levelText = q.level === 'HL' ? 'HL Only' : 'SL + HL';
+
+  if (!a.submitted) {
+    return `<div class="q-card" style="border-color:${accent}22" id="qc-${q.id}">
+      <div class="q-badges">
+        <span class="badge" style="background:${levelBg};color:${levelColor}">${levelText}</span>
+        ${isEssay
+          ? '<span class="badge badge-essay">10 marks, marked by your teacher</span>'
+          : `<span class="badge badge-marks">${q.marks} marks</span>`}
+      </div>
+      <div class="q-text">${escHtml(q.question)}</div>
+      <textarea class="q-textarea" id="ta-${q.id}" rows="${isEssay ? 12 : 5}"
+        style="border-color:${accent}44"
+        placeholder="${isEssay ? 'Plan your essay here. Note your paragraphs, the theories you will use, and how you will apply them to the context.' : 'Write your answer here...'}"
+      ></textarea>
+      <button class="submit-btn" data-qid="${q.id}" style="background:${accent}" id="sb-${q.id}">
+        ${isEssay ? 'Show Essay Guidance' : 'Submit Answer'}
+      </button>
+      ${isEssay ? `<div class="source-tag">This does not send anything to your teacher. Write your full essay by hand and hand it in for marking.</div>` : ''}
+    </div>`;
+  }
+
+  // Submitted state
+  const sc = a.score;
+  const sColor = sc !== null ? scoreColor(sc, q.marks) : '#aaa';
+
+  let scoreHTML = '';
+  if (!isEssay && sc !== null) {
+    scoreHTML = `<div class="score-box" style="background:${sColor}15;border-color:${sColor}44">
+      <div class="score-num" style="color:${sColor}">${sc}/${q.marks}</div>
+      <div>
+        <div class="score-label" style="color:${sColor}">${scoreLabel(sc, q.marks)}</div>
+        <div class="score-sub">Scored automatically on key concept coverage</div>
+      </div>
+    </div>`;
+  }
+  if (isEssay) {
+    scoreHTML = `<div class="essay-guidance">
+      <div class="essay-guidance-title">📋 Essay Guidance (for teacher marking)</div>
+      <div class="essay-guidance-text">${escHtml(q.essayGuidance)}</div>
+      <div class="essay-guidance-text" style="margin-top:10px;font-weight:700">Remember, write your full essay by hand and hand it to your teacher. Nothing on this page is submitted for you.</div>
+    </div>`;
+  }
+
+  const modelBtn = !isEssay ? `<button class="action-btn" data-mid="${q.id}"
+    style="border:1px solid ${accent}55;color:${accent}" id="mb-${q.id}">
+    ${a.showModel ? 'Hide' : 'Show'} Model Answer
+  </button>` : '';
+
+  const modelHtml = (!isEssay && a.showModel) ? `<div class="model-answer-box">
+    <div class="ma-label">Model Answer</div>
+    <div class="ma-text">${escHtml(q.modelAnswer)}</div>
+    <div class="mg-divider">
+      <div class="mg-label">Marking Guidance</div>
+      <div class="mg-text">${escHtml(q.markingGuidance)}</div>
+    </div>
+  </div>` : '';
+
+  return `<div class="q-card" style="border-color:${accent}22" id="qc-${q.id}">
+    <div class="q-badges">
+      <span class="badge" style="background:${levelBg};color:${levelColor}">${levelText}</span>
+      ${isEssay
+        ? '<span class="badge badge-essay">10 marks, marked by your teacher</span>'
+        : `<span class="badge badge-marks">${q.marks} marks</span>`}
+    </div>
+    <div class="q-text">${escHtml(q.question)}</div>
+    <div class="user-answer-box" style="border-color:${accent}33">
+      <div class="ua-label">${isEssay ? 'Your Plan' : 'Your Answer'}</div>
+      <div class="ua-text">${escHtml(a.text)}</div>
+    </div>
+    ${scoreHTML}
+    ${modelBtn}
+    <button class="reset-btn" data-rid="${q.id}">Try Again</button>
+    ${modelHtml}
+  </div>`;
+}
+
+function bindQuestions(unit) {
+  const qs = QUESTIONS[unit.id];
+
+  qs.forEach(q => {
+    // Submit
+    const sb = document.getElementById('sb-' + q.id);
+    if (sb) {
+      const ta = document.getElementById('ta-' + q.id);
+      sb.addEventListener('click', () => {
+        const text = ta.value;
+        if (!text.trim()) return;
+        const score = q.type !== 'essay' ? scoreAnswer(text, q) : null;
+        state.answers[q.id] = { text, submitted: true, score, showModel: false };
+        render();
+        // Scroll to the card
+        setTimeout(() => {
+          const el = document.getElementById('qc-' + q.id);
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 50);
+      });
+      ta.addEventListener('input', () => { sb.style.opacity = ta.value.trim() ? '1' : '0.4'; });
+      sb.style.opacity = '0.4';
+    }
+
+    // Show/hide model
+    const mb = document.getElementById('mb-' + q.id);
+    if (mb) {
+      mb.addEventListener('click', () => {
+        state.answers[q.id].showModel = !state.answers[q.id].showModel;
+        render();
+      });
+    }
+
+    // Reset
+    document.querySelectorAll('[data-rid]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        delete state.answers[btn.dataset.rid];
+        render();
+      });
+    });
+  });
+}
+
+// ─── PAST PAPERS ──────────────────────────────────────────────────────────────
+
+function renderPastPapers(unit) {
+  const items = PASTPAPERS[unit.id] || [];
+  if (!items.length) return `<div class="intro-text">No past-paper items loaded for this unit yet.</div>`;
+  return `
+    <div class="intro-text">Real questions from official IB past papers and examiner-style practice material, tagged to this unit. Write your own answer first, then reveal the real mark scheme to self-assess — retrieval before checking is what makes it stick.</div>
+    ${items.map(q => renderPastPaper(q, unit.accent)).join('')}`;
+}
+
+function renderPastPaper(q, accent) {
+  const a = state.answers[q.id] || {};
+  const levelBg = q.level === 'HL' ? '#ff6b6b22' : '#52b78822';
+  const levelColor = q.level === 'HL' ? '#ff6b6b' : '#52b788';
+
+  if (!a.submitted) {
+    return `<div class="q-card" style="border-color:${accent}22" id="qc-${q.id}">
+      <div class="q-badges">
+        <span class="badge" style="background:${levelBg};color:${levelColor}">${q.level === 'HL' ? 'HL Only' : 'SL + HL'}</span>
+        <span class="badge badge-marks">${q.marks} marks</span>
+      </div>
+      <div class="q-text">${escHtml(q.question)}</div>
+      <textarea class="q-textarea" id="ta-${q.id}" rows="6"
+        style="border-color:${accent}44"
+        placeholder="Write your answer here..."
+      ></textarea>
+      <button class="submit-btn" data-qid="${q.id}" style="background:${accent}" id="sb-${q.id}">
+        Reveal Mark Scheme
+      </button>
+      <div class="source-tag">Source: ${escHtml(q.sourceFile)}</div>
+    </div>`;
+  }
+
+  return `<div class="q-card" style="border-color:${accent}22" id="qc-${q.id}">
+    <div class="q-badges">
+      <span class="badge" style="background:${levelBg};color:${levelColor}">${q.level === 'HL' ? 'HL Only' : 'SL + HL'}</span>
+      <span class="badge badge-marks">${q.marks} marks</span>
+    </div>
+    <div class="q-text">${escHtml(q.question)}</div>
+    <div class="user-answer-box" style="border-color:${accent}33">
+      <div class="ua-label">Your Answer</div>
+      <div class="ua-text">${escHtml(a.text)}</div>
+    </div>
+    <div class="model-answer-box">
+      <div class="ma-label">Official Mark Scheme</div>
+      <div class="ma-text">${escHtml(q.markScheme)}</div>
+    </div>
+    <button class="reset-btn" data-rid="${q.id}">Try Again</button>
+    <div class="source-tag">Source: ${escHtml(q.sourceFile)}</div>
+  </div>`;
+}
+
+function bindPastPapers(unit) {
+  const items = PASTPAPERS[unit.id] || [];
+  items.forEach(q => {
+    const sb = document.getElementById('sb-' + q.id);
+    if (sb) {
+      const ta = document.getElementById('ta-' + q.id);
+      sb.addEventListener('click', () => {
+        const text = ta.value;
+        if (!text.trim()) return;
+        state.answers[q.id] = { text, submitted: true, score: null, showModel: false };
+        render();
+        setTimeout(() => {
+          const el = document.getElementById('qc-' + q.id);
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 50);
+      });
+      ta.addEventListener('input', () => { sb.style.opacity = ta.value.trim() ? '1' : '0.4'; });
+      sb.style.opacity = '0.4';
+    }
+  });
+  document.querySelectorAll('[data-rid]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      delete state.answers[btn.dataset.rid];
+      render();
+    });
+  });
+}
+
+function escHtml(str) {
+  if (!str) return '';
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+render();
+</script>
+</body>
+</html>
